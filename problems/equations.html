@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>連立方程式ノック</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #ffffff; margin: 0; padding: 10px; color: #2d3748; }
+        .display-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        
+        /* 連立方程式の綺麗な中カッコ表示 */
+        .equation-style {
+            display: inline-flex;
+            align-items: center;
+            font-size: 22px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: left;
+        }
+        .bracket {
+            font-size: 55px;
+            font-weight: 100;
+            margin-right: 5px;
+            line-height: 1;
+            transform: scaleY(1.1);
+        }
+        .lines {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* 入力エリア */
+        .input-area { display: flex; justify-content: center; gap: 20px; margin-top: 15px; }
+        .input-group { display: flex; align-items: center; gap: 5px; font-size: 18px; font-weight: bold; }
+        input[type="number"] { width: 60px; padding: 8px; font-size: 18px; text-align: center; border: 2px solid #cbd5e0; border-radius: 6px; }
+        
+        .btn-check { background: #48bb78; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 15px; width: 100%; max-width: 200px; }
+        .result { font-size: 16px; font-weight: bold; margin-top: 10px; min-height: 24px; }
+        .correct { color: #38a169; }
+        .wrong { color: #e53e3e; }
+    </style>
+</head>
+<body>
+
+<div class="display-box">
+    <div style="font-size: 14px; font-weight: bold; color: #718096;">次の連立方程式を解き、x と y の値を入力せよ。</div>
+    
+    <!-- 連立方程式表示 -->
+    <div class="equation-style">
+        <div class="bracket">{</div>
+        <div class="lines">
+            <div id="eq1">ax + by = c</div>
+            <div id="eq2">dx + ey = f</div>
+        </div>
+    </div>
+
+    <!-- 入力フォーム -->
+    <div class="input-area">
+        <div class="input-group">
+            <span>x =</span>
+            <input type="number" id="ans-x" pattern="[0-9]*" placeholder="?">
+        </div>
+        <div class="input-group">
+            <span>y =</span>
+            <input type="number" id="ans-y" pattern="[0-9]*" placeholder="?">
+        </div>
+    </div>
+
+    <button class="btn-check" onclick="checkAnswer()">判定</button>
+    <div class="result" id="result-msg"></div>
+</div>
+
+<script>
+    let correctX = 0;
+    let correctY = 0;
+
+    // 起動時に問題を生成
+    generateProblem();
+
+    function generateProblem() {
+        document.getElementById('result-msg').innerText = "";
+        document.getElementById('ans-x').value = "";
+        document.getElementById('ans-y').value = "";
+
+        let a, b, d, e, x, y, c, f;
+
+        while (true) {
+            // 1. 答え(x, y)を先に整数でランダム決定 (-7 〜 7, 0は除く)
+            x = Math.floor(Math.random() * 15) - 7;
+            y = Math.floor(Math.random() * 15) - 7;
+            if (x === 0 || y === 0) continue;
+
+            // 2. 係数(a, b, d, e)をランダム決定 (-5 〜 5, 0は除く)
+            a = Math.floor(Math.random() * 11) - 5;
+            b = Math.floor(Math.random() * 11) - 5;
+            d = Math.floor(Math.random() * 11) - 5;
+            e = Math.floor(Math.random() * 11) - 5;
+            if (a === 0 || b === 0 || d === 0 || e === 0) continue;
+
+            // 解が1つに定まるか（平行な直線にならないか）チェック
+            if (a * e - b * d === 0) continue;
+
+            // 3. 定数項(c, f)を計算
+            c = a * x + b * y;
+            f = d * x + e * y;
+
+            break;
+        }
+
+        correctX = x;
+        correctY = y;
+
+        // 式を綺麗に文字列化する関数 (例: 1x ➔ x, +-3y ➔ -3y)
+        function formatEq(coef1, var1, coef2, var2, total) {
+            let part1 = coef1 === 1 ? var1 : (coef1 === -1 ? `-${var1}` : `${coef1}${var1}`);
+            let part2 = "";
+            if (coef2 === 1) part2 = ` + ${var2}`;
+            else if (coef2 === -1) part2 = ` - ${var2}`;
+            else if (coef2 > 0) part2 = ` + ${coef2}${var2}`;
+            else part2 = ` - ${Math.abs(coef2)}${var2}`;
+            return `${part1}${part2} = ${total}`;
+        }
+
+        document.getElementById('eq1').innerText = formatEq(a, 'x', b, 'y', c);
+        document.getElementById('eq2').innerText = formatEq(d, 'x', e, 'y', f);
+    }
+
+    function checkAnswer() {
+        const userX = parseInt(document.getElementById('ans-x').value);
+        const userY = parseInt(document.getElementById('ans-y').value);
+
+        if (isNaN(userX) || isNaN(userY)) {
+            alert("x と y の両方に数値を入力してください！");
+            return;
+        }
+
+        const msgDiv = document.getElementById('result-msg');
+
+        if (userX === correctX && userY === correctY) {
+            msgDiv.innerText = "⭕️ 正解！";
+            msgDiv.className = "result correct";
+            
+            // 親ダッシュボードの「次へ」ボタンを自動で押させて進める
+            setTimeout(() => {
+                if (window.parent && typeof window.parent.nextTestQuestion === 'function') {
+                    window.parent.nextTestQuestion();
+                } else {
+                    // 単体テスト用
+                    generateProblem();
+                }
+            }, 800);
+        } else {
+            msgDiv.innerText = "❌ 違います。もう一度計算してみよう！";
+            msgDiv.className = "result wrong";
+        }
+    }
+</script>
+
+</body>
+</html>
