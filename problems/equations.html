@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>連立方程式・最速暗算ノック（バグ修正版）</title>
+    <title>連立方程式・最速暗算ノック（本番仕様）</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 480px; box-sizing: border-box; }
@@ -172,7 +172,6 @@
         container.innerHTML = '';
         let presets = JSON.parse(localStorage.getItem('math_presets') || '[]');
         
-        // 10問、20問、50問、100問ベースのデフォルト設定
         if (presets.length === 0) {
             presets = [
                 { name: "定番10問 (Lv.2)", count: 10, complexity: 2 },
@@ -203,11 +202,8 @@
     }
 
     function startGame() {
-        // セレクトボックスから確実に数値を読み込む
         totalQuestions = parseInt(document.getElementById('config-count').value, 10);
         complexity = parseInt(complexityInput.value, 10);
-        
-        // カウンターを「1」に確実にリセット
         currentQuestionIndex = 1;
 
         document.getElementById('panel-config').classList.add('hidden');
@@ -243,7 +239,6 @@
         const userY = parseInt(document.getElementById('ans-y').value, 10);
 
         if (userX === correctX && userY === correctY) {
-            // 現在の問題数が設定された総問題数より小さい場合のみ次に進む
             if (currentQuestionIndex < totalQuestions) {
                 currentQuestionIndex++;
                 nextQuestion();
@@ -251,7 +246,7 @@
                 endGame();
             }
         } else {
-            alert(`違います！\n（ヒント: この問題の正解は x=${correctX}, y=${correctY} です）`);
+            alert("答えが違います！もう一度計算してみてね。");
         }
     }
 
