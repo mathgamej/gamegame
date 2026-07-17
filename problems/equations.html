@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>連立方程式・最速暗算ノック（修正版）</title>
+    <title>連立方程式・最速暗算ノック（バグ修正版）</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 480px; box-sizing: border-box; }
@@ -41,10 +41,10 @@
             <div class="config-item">
                 <label for="config-count">問題数</label>
                 <select id="config-count">
-                    <option value="3">3問</option>
-                    <option value="5" selected>5問</option>
-                    <option value="10">10問</option>
+                    <option value="10" selected>10問</option>
                     <option value="20">20問</option>
+                    <option value="50">50問</option>
+                    <option value="100">100問</option>
                 </select>
             </div>
             <div class="config-item">
@@ -66,7 +66,7 @@
     <!-- 2️⃣ プレイ画面 -->
     <div id="panel-game" class="hidden">
         <div class="game-status">
-            <span id="progress-text">第 1 / 5 問</span>
+            <span id="progress-text">第 1 / 10 問</span>
             <span id="timer-text">タイム: 0.00 秒</span>
         </div>
         <div class="equation-box" id="equation-display">読み込み中...</div>
@@ -96,7 +96,7 @@
 </div>
 
 <script>
-    let totalQuestions = 5;
+    let totalQuestions = 10;
     let complexity = 2;
     let currentQuestionIndex = 0;
     let correctX = 0, correctY = 0;
@@ -105,8 +105,7 @@
 
     function generateProblem(level) {
         let x, y, a, b, d, e;
-        // 文字列で受け取ってしまった場合の対策として確実に数値に変換
-        const lvl = parseInt(level);
+        const lvl = parseInt(level, 10);
 
         if (lvl === 1) {
             x = Math.floor(Math.random() * 5) + 1;
@@ -163,7 +162,7 @@
         if (!name) return;
 
         let presets = JSON.parse(localStorage.getItem('math_presets') || '[]');
-        presets.push({ name: name, count: parseInt(count), complexity: parseInt(comp) });
+        presets.push({ name: name, count: parseInt(count, 10), complexity: parseInt(comp, 10) });
         localStorage.setItem('math_presets', JSON.stringify(presets));
         loadPresets();
     }
@@ -173,11 +172,13 @@
         container.innerHTML = '';
         let presets = JSON.parse(localStorage.getItem('math_presets') || '[]');
         
+        // 10問、20問、50問、100問ベースのデフォルト設定
         if (presets.length === 0) {
             presets = [
-                { name: "サクッと3問 (Lv.1)", count: 3, complexity: 1 },
-                { name: "標準5問 (Lv.2)", count: 5, complexity: 2 },
-                { name: "地獄の10問 (Lv.5)", count: 10, complexity: 5 }
+                { name: "定番10問 (Lv.2)", count: 10, complexity: 2 },
+                { name: "ガッツリ20問 (Lv.3)", count: 20, complexity: 3 },
+                { name: "ノック50問 (Lv.4)", count: 50, complexity: 4 },
+                { name: "地獄の100問 (Lv.5)", count: 100, complexity: 5 }
             ];
         }
 
@@ -202,8 +203,11 @@
     }
 
     function startGame() {
-        totalQuestions = parseInt(document.getElementById('config-count').value);
-        complexity = parseInt(complexityInput.value);
+        // セレクトボックスから確実に数値を読み込む
+        totalQuestions = parseInt(document.getElementById('config-count').value, 10);
+        complexity = parseInt(complexityInput.value, 10);
+        
+        // カウンターを「1」に確実にリセット
         currentQuestionIndex = 1;
 
         document.getElementById('panel-config').classList.add('hidden');
@@ -231,16 +235,15 @@
     }
 
     function checkAnswer() {
-        // 空欄のときは処理しない
         if(document.getElementById('ans-x').value === "" || document.getElementById('ans-y').value === "") {
             return;
         }
 
-        // 入力値を確実に数値に変換
         const userX = parseInt(document.getElementById('ans-x').value, 10);
         const userY = parseInt(document.getElementById('ans-y').value, 10);
 
         if (userX === correctX && userY === correctY) {
+            // 現在の問題数が設定された総問題数より小さい場合のみ次に進む
             if (currentQuestionIndex < totalQuestions) {
                 currentQuestionIndex++;
                 nextQuestion();
@@ -248,7 +251,7 @@
                 endGame();
             }
         } else {
-            alert(`違います！\n（ヒント: この問題の正解は x=${correctX}, y=${correctY} です。デバッグ用）`);
+            alert(`違います！\n（ヒント: この問題の正解は x=${correctX}, y=${correctY} です）`);
         }
     }
 
