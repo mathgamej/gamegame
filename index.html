@@ -3,166 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数学演習プラットフォーム</title>
+    <title>数学トレーニング・ダッシュボード</title>
     <style>
-        body { font-family: sans-serif; background-color: #f7fafc; margin: 0; padding: 15px; color: #2d3748; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h1 { font-size: 20px; text-align: center; color: #2b6cb0; margin-top: 0; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .dashboard { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { font-size: 24px; text-align: center; margin-bottom: 25px; color: #111; }
+        h2 { font-size: 18px; margin-top: 30px; border-left: 4px solid #007aff; padding-left: 8px; color: #444; }
         
-        .timer-box { background: #1a202c; color: #48bb78; font-family: monospace; font-size: 32px; font-weight: bold; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; }
-        .search-box { margin-bottom: 15px; }
-        input[type="text"] { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        /* 📝 問題リストのスタイル */
+        .problem-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .problem-item { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: #f8f9fa; border-radius: 10px; border: 1px solid #eee; transition: background 0.2s; }
+        .problem-item:hover { background: #f1f3f5; }
+        .problem-info { display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; }
+        .problem-checkbox { width: 18px; height: 18px; cursor: pointer; }
+        .problem-title { font-weight: bold; font-size: 16px; }
+        .tag { font-size: 12px; background: #007aff; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
         
-        .q-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; max-height: 250px; overflow-y: auto; }
-        .q-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .q-info { text-align: left; }
-        .q-title { font-weight: bold; font-size: 15px; }
-        .q-tag { font-size: 11px; background: #ebd3f8; color: #805ad5; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-top: 4px; display: inline-block; }
-        .no-data { text-align: center; color: #a0aec0; padding: 20px; font-size: 14px; border: 2px dashed #e2e8f0; border-radius: 8px; }
+        /* 🚀 プレイボタン */
+        .btn-play { background: #34c759; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .btn-play:hover { background: #28a745; }
         
-        .test-action { background: #edf2f7; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; }
-        .btn-start { background: #3182ce; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; }
+        /* ⚙️ カスタムコース作成エリア */
+        .custom-box { background: #f0f4f8; padding: 15px; border-radius: 12px; border: 1px solid #dce4ec; margin-top: 15px; }
+        .input-group { display: flex; gap: 10px; margin-top: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
+        .btn-save { background: #007aff; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        .game-wrapper { display: none; border: 3px solid #3182ce; border-radius: 12px; overflow: hidden; background: white; margin-top: 15px; }
-        .game-header { background: #3182ce; color: white; padding: 8px 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-        .btn-next { background: #48bb78; color: white; border: none; padding: 6px 14px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        iframe { width: 100%; height: 500px; border: none; display: block; }
-
-        /* AI用プロンプト表示エリア */
-        .ai-prompt-box { background: #fffaf0; border: 1px solid #feebc8; border-radius: 10px; padding: 15px; margin-top: 20px; text-align: left; }
-        .ai-prompt-box h2 { font-size: 14px; color: #dd6b20; margin-top: 0; }
-        .prompt-text { background: #fff; border: 1px solid #fbd38d; padding: 10px; font-size: 12px; font-family: monospace; white-space: pre-wrap; word-break: break-all; border-radius: 6px; user-select: all; }
+        /* 💾 保存されたコースリスト */
+        .course-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .course-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e0e0e0; border-radius: 8px; }
+        .course-name { font-weight: bold; color: #333; }
+        .btn-course-play { background: #ff9500; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-delete { background: #ff3b30; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📐 数学演習ダッシュボード</h1>
-    
-    <div class="timer-box" id="display-timer">00:00.00</div>
-    
-    <div class="search-box">
-        <input type="text" id="search-input" placeholder="🔍 問題名やタグで検索..." oninput="filterQuestions()">
+<div class="dashboard">
+    <h1>📐 数学トレーニング</h1>
+
+    <!-- 1️⃣ 問題の一覧（上から羅列） -->
+    <h2>単体で遊ぶ / 組み合わせを選ぶ</h2>
+    <div class="problem-list" id="master-problem-list">
+        <!-- JavaScriptで自動生成されます -->
     </div>
-    
-    <div class="q-list" id="question-list"></div>
-    
-    <div class="test-action">
-        <button class="btn-start" onclick="startCustomTest()">選択した問題でテスト開始 ➔</button>
+
+    <!-- 2️⃣ 選択した組み合わせを保存するエリア -->
+    <div class="custom-box">
+        <span style="font-weight: bold; font-size: 14px; color: #555;">💡 チェックした問題をセットとして保存する</span>
+        <div class="input-group">
+            <input type="text" id="course-name-input" placeholder="例: 毎日のウォーミングアップ設定">
+            <button class="btn-save" onclick="saveCustomCourse()">⭐ 組み合わせを保存</button>
+        </div>
     </div>
-</div>
 
-<div class="container game-wrapper" id="game-container">
-    <div class="game-header">
-        <span id="current-q-title">プレイ中の問題</span>
-        <button class="btn-next" onclick="nextTestQuestion()">次の問題へ ➔</button>
+    <!-- 3️⃣ 保存されたお気に入り組み合わせリスト -->
+    <h2>💾 マイカスタムコース</h2>
+    <div class="course-list" id="saved-course-list">
+        <!-- 保存されたコースがここに並びます -->
     </div>
-    <iframe id="game-frame" src=""></iframe>
-</div>
-
-<!-- 🤖 AI指示書エリア（ここがあなたの記憶の代わりになります） -->
-<div class="container ai-prompt-box">
-    <h2>🤖 チャットが変わっても安心！AIへの問題発注用コピペ文</h2>
-    <p style="font-size: 11px; color: #718096; margin-top: 0;">以下の枠内をすべてコピーして、AI（ChatGPTやGeminiなど）にそのまま貼り付けてください。</p>
-    <div class="prompt-text" id="prompt-content">以下の条件を満たす、単一のHTMLで完結する数学のランダム問題生成ゲームを作成してください。
-
-【前提条件】
-・親画面のiframe内に埋め込んで使用します。
-・外部のCSSやJSライブラリ、画像は一切使わず、1つのHTMLファイル内にすべてのHTML, CSS, JavaScriptを完結させてください。
-・スマホで操作しやすいUI（ボタンを大きく、レスポンシブ）にしてください。
-
-【機能要件】
-・ページを開く、または問題が解かれるたびに、指定されたテーマに沿った問題がランダム（動的）に生成されること。
-・「正解・不正解」の判定ロジックを必ずJSに組み込むこと。
-・今回は以下のテーマで問題を作ってください。
-💡[ここに作ってほしいテーマ（例：集合論の和集合、写像の全単射など）を自由に書く]</div>
 </div>
 
 <script>
     // ==========================================
-    // 🛠 問題の追加はここを増やすだけ！
+    // 🛠️ 問題のデータベース（新しい問題はここに追加！）
     // ==========================================
     const questionDatabase = [
-        { filename: "problems/equations.html", title: "連立方程式", tag: "方程式"}
-        // { filename: "q_set_1.html", title: "集合論・基本属関係ノック", tag: "集合論" },
+        { id: "eq", filename: "problems/equations.html", title: "連立方程式・最速暗算ノック", tag: "方程式" },
+        { id: "cube", filename: "problems/cube.html", title: "立体の展開図・空間認識", tag: "空間図形" }
+        // 今後新しい子プログラムを追加するときはここを増やすだけで自動的に選択画面に対応します
     ];
 
-    let selectedQuestions = [];
-    let currentTestIndex = 0;
-    let startTime = 0;
-    let timerInterval = null;
+    // 画面起動時にリストを描画
+    function renderDashboard() {
+        const pList = document.getElementById('master-problem-list');
+        pList.innerHTML = '';
 
-    renderList(questionDatabase);
+        questionDatabase.forEach(prob => {
+            const item = document.createElement('div');
+            item.className = 'problem-item';
+            item.innerHTML = `
+                <div class="problem-info">
+                    <input type="checkbox" class="problem-checkbox" value="${prob.id}" id="chk-${prob.id}">
+                    <label for="chk-${prob.id}" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
+                        <span class="tag">${prob.tag}</span>
+                        <span class="problem-title">${prob.title}</span>
+                    </label>
+                </div>
+                <a class="btn-play" href="${prob.filename}">単体プレイ</a>
+            `;
+            pList.appendChild(item);
+        });
 
-    function renderList(list) {
-        const listDiv = document.getElementById('question-list');
-        listDiv.innerHTML = "";
-        if (list.length === 0) {
-            listDiv.innerHTML = `<div class="no-data">まだ問題が登録されていません。<br>コード内の「questionDatabase」にファイルを追加してください。</div>`;
+        loadCustomCourses();
+    }
+
+    // --- 💾 組み合わせの保存機能 ---
+    function saveCustomCourse() {
+        const nameInput = document.getElementById('course-name-input');
+        const courseName = nameInput.value.trim();
+        if (!courseName) {
+            alert("コースの名前を入力してください！");
             return;
         }
-        list.forEach(q => {
-            let card = document.createElement('div');
-            card.className = 'q-card';
-            card.innerHTML = `
-                <div class="q-info"><div class="q-title">${q.title}</div><div class="q-tag"># ${q.tag}</div></div>
-                <div><input type="checkbox" class="q-checkbox" value="${q.filename}" style="transform: scale(1.5); cursor:pointer;"></div>
+
+        // チェックされている問題のIDを回収
+        const checkedIds = [];
+        questionDatabase.forEach(prob => {
+            if (document.getElementById(`chk-${prob.id}`).checked) {
+                checkedIds.push(prob.id);
+            }
+        });
+
+        if (checkedIds.length === 0) {
+            alert("組み合わせる問題を少なくとも1つチェックしてください！");
+            return;
+        }
+
+        // LocalStorageに保存
+        let savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
+        savedCourses.push({ name: courseName, problems: checkedIds });
+        localStorage.setItem('math_custom_courses', JSON.stringify(savedCourses));
+
+        // 入力をリセットして再描画
+        nameInput.value = '';
+        // チェックボックスも外す
+        questionDatabase.forEach(prob => document.getElementById(`chk-${prob.id}`).checked = false);
+        
+        loadCustomCourses();
+    }
+
+    // --- 📂 保存されたコースの読み込み表示 ---
+    function loadCustomCourses() {
+        const container = document.getElementById('saved-course-list');
+        container.innerHTML = '';
+        const savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
+
+        if (savedCourses.length === 0) {
+            container.innerHTML = '<p style="color:#aaa; font-size:14px; text-align:center;">保存されたカスタムコースはまだありません</p>';
+            return;
+        }
+
+        savedCourses.forEach((course, index) => {
+            // 含まれるタグの文字列を生成
+            const tagNames = course.problems.map(id => {
+                const found = questionDatabase.find(p => p.id === id);
+                return found ? `[${found.tag}]` : '';
+            }).join(' ');
+
+            const item = document.createElement('div');
+            item.className = 'course-item';
+            item.innerHTML = `
+                <div>
+                    <div class="course-name">${course.name}</div>
+                    <div style="font-size:12px; color:#666; margin-top:4px;">構成: ${tagNames}</div>
+                </div>
+                <div>
+                    <button class="btn-course-play" onclick="playCustomCourse(${index})">コース開始</button>
+                    <button class="btn-delete" onclick="deleteCourse(${index})">削除</button>
+                </div>
             `;
-            listDiv.appendChild(card);
+            container.appendChild(item);
         });
     }
 
-    function filterQuestions() {
-        const query = document.getElementById('search-input').value.toLowerCase();
-        const filtered = questionDatabase.filter(q => q.title.toLowerCase().includes(query) || q.tag.toLowerCase().includes(query));
-        renderList(filtered);
-    }
+    // --- 🚀 カスタムコースの連続プレイ機能 ---
+    function playCustomCourse(index) {
+        const savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
+        const course = savedCourses[index];
+        
+        if (!course || course.problems.length === 0) return;
 
-    function startTimer() {
-        startTime = Date.now();
-        timerInterval = setInterval(() => {
-            let diff = Date.now() - startTime;
-            let min = Math.floor(diff / 60000); let sec = Math.floor((diff % 60000) / 1000); let ms = Math.floor((diff % 1000) / 10);
-            document.getElementById('display-timer').innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
-        }, 10);
-    }
-
-    function stopTimer() { clearInterval(timerInterval); }
-
-    function startCustomTest() {
-        selectedQuestions = [];
-        const checkboxes = document.querySelectorAll('.q-checkbox:checked');
-        checkboxes.forEach(cb => {
-            let match = questionDatabase.find(q => q.filename === cb.value);
-            if(match) selectedQuestions.push(match);
-        });
-        if(selectedQuestions.length === 0) { alert("問題をチェックしてください！"); return; }
-        currentTestIndex = 0;
-        document.getElementById('game-container').style.display = "block";
-        startTimer();
-        loadQuestionIntoIframe();
-        document.getElementById('game-container').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function loadQuestionIntoIframe() {
-        const currentQ = selectedQuestions[currentTestIndex];
-        document.getElementById('current-q-title').innerText = `[${currentTestIndex + 1}/${selectedQuestions.length}] ${currentQ.title}`;
-        document.getElementById('game-frame').src = currentQ.filename;
-    }
-
-    function nextTestQuestion() {
-        currentTestIndex++;
-        if(currentTestIndex < selectedQuestions.length) {
-            loadQuestionIntoIframe();
-        } else {
-            stopTimer();
-            let finalTime = document.getElementById('display-timer').innerText;
-            alert(`🎉 テスト完了！\nタイム: ${finalTime}`);
-            document.getElementById('game-container').style.display = "none";
-            document.getElementById('game-frame').src = "";
+        // 選ばれた問題の一覧から、最初の問題のURLを取得してジャンプする
+        // ※発展形として、クエリパラメータを使って「コースプレイ中フラグ」を子に渡すことも可能です。
+        const firstProbId = course.problems[0];
+        const foundProb = questionDatabase.find(p => p.id === firstProbId);
+        
+        if (foundProb) {
+            alert(`「${course.name}」を開始します！\nまずは最初の問題【${foundProb.title}】へ移動します。`);
+            location.href = foundProb.filename;
         }
     }
-</script>
 
+    // --- ❌ コースの削除 ---
+    function deleteCourse(index) {
+        if(!confirm("このカスタムコースを削除してよろしいですか？")) return;
+        let savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
+        savedCourses.splice(index, 1);
+        localStorage.setItem('math_custom_courses', JSON.stringify(savedCourses));
+        loadCustomCourses();
+    }
+
+    // 起動
+    renderDashboard();
+</script>
 </body>
 </html>
