@@ -10,45 +10,47 @@
         h1 { font-size: 24px; text-align: center; margin-bottom: 25px; color: #111; }
         h2 { font-size: 18px; margin-top: 30px; border-left: 4px solid #007aff; padding-left: 8px; color: #444; }
         
-        /* 📝 問題リストのスタイル */
         .problem-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .problem-item { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: #f8f9fa; border-radius: 10px; border: 1px solid #eee; transition: background 0.2s; }
-        .problem-item:hover { background: #f1f3f5; }
-        .problem-info { display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; }
+        .problem-item { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: #f8f9fa; border-radius: 10px; border: 1px solid #eee; }
+        .problem-info { display: flex; align-items: center; gap: 12px; flex: 1; }
         .problem-checkbox { width: 18px; height: 18px; cursor: pointer; }
         .problem-title { font-weight: bold; font-size: 16px; }
         .tag { font-size: 12px; background: #007aff; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
         
-        /* 🚀 プレイボタン */
-        .btn-play { background: #34c759; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; }
-        .btn-play:hover { background: #28a745; }
+        .btn-play { background: #34c759; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; text-align: center; }
         
-        /* ⚙️ カスタムコース作成エリア */
         .custom-box { background: #f0f4f8; padding: 15px; border-radius: 12px; border: 1px solid #dce4ec; margin-top: 15px; }
         .input-group { display: flex; gap: 10px; margin-top: 10px; }
         input[type="text"] { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
         .btn-save { background: #007aff; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        /* 💾 保存されたコースリスト */
         .course-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .course-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e0e0e0; border-radius: 8px; }
         .course-name { font-weight: bold; color: #333; }
         .btn-course-play { background: #ff9500; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-delete { background: #ff3b30; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
+        
+        .hidden { display: none !important; }
+        
+        /* 🕒 タイマー＆リザルト画面のスタイル */
+        .timer-banner { background: #222; color: #34c759; text-align: center; padding: 10px; font-size: 20px; font-family: monospace; font-weight: bold; border-radius: 8px; margin-bottom: 15px; }
+        .game-container { width: 100%; height: 600px; border: none; border-radius: 12px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); background: #fff; }
+        .result-box { text-align: center; padding: 40px 20px; }
+        .result-time { font-size: 54px; font-weight: bold; color: #007aff; margin: 25px 0; font-family: monospace; }
+        .btn-main { width: 100%; max-width: 300px; padding: 14px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px auto; display: block; text-align: center; text-decoration: none; }
+        .btn-retry { background-color: #34c759; color: white; }
+        .btn-back { background-color: #8e8e93; color: white; }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
+<!-- 🏡 1️⃣ メインダッシュボード画面 -->
+<div class="dashboard" id="view-dashboard">
     <h1>📐 数学トレーニング</h1>
 
-    <!-- 1️⃣ 問題の一覧（上から羅列） -->
     <h2>単体で遊ぶ / 組み合わせを選ぶ</h2>
-    <div class="problem-list" id="master-problem-list">
-        <!-- JavaScriptで自動生成されます -->
-    </div>
+    <div class="problem-list" id="master-problem-list"></div>
 
-    <!-- 2️⃣ 選択した組み合わせを保存するエリア -->
     <div class="custom-box">
         <span style="font-weight: bold; font-size: 14px; color: #555;">💡 チェックした問題をセットとして保存する</span>
         <div class="input-group">
@@ -57,24 +59,39 @@
         </div>
     </div>
 
-    <!-- 3️⃣ 保存されたお気に入り組み合わせリスト -->
     <h2>💾 マイカスタムコース</h2>
-    <div class="course-list" id="saved-course-list">
-        <!-- 保存されたコースがここに並びます -->
+    <div class="course-list" id="saved-course-list"></div>
+</div>
+
+<!-- 🎮 2️⃣ プレイ中画面（iframeで子画面を呼び出す） -->
+<div class="dashboard hidden" id="view-game">
+    <div class="timer-banner" id="parent-timer">TIME: 0.00s</div>
+    <!-- ここに子プログラム（equations.html等）が埋め込まれて起動します -->
+    <iframe class="game-container" id="game-frame" src=""></iframe>
+</div>
+
+<!-- 🎉 3️⃣ 一括リザルト表示画面 -->
+<div class="dashboard hidden" id="view-result">
+    <div class="result-box">
+        <h1>🎉 ALL CLEAR！</h1>
+        <p>すべてのトレーニングが完了しました！</p>
+        <p>あなたの記録：</p>
+        <div class="result-time" id="final-clear-time">0.00 秒</div>
+        
+        <button class="btn-main btn-retry" onclick="retryLastPlay()">🔄 もう一度挑戦する</button>
+        <button class="btn-main btn-back" onclick="backToDashboard()">🏠 ダッシュボードに戻る</button>
     </div>
 </div>
 
 <script>
-    // ==========================================
-    // 🛠️ 問題のデータベース（新しい問題はここに追加！）
-    // ==========================================
     const questionDatabase = [
-        { id: "eq", filename: "problems/equations.html", title: "連立方程式・最速暗算ノック", tag: "方程式" },
-        
-        // 今後新しい子プログラムを追加するときはここを増やすだけで自動的に選択画面に対応します
+        { id: "eq", filename: "problems/equations.html", title: "連立方程式・最速暗算ノック", tag: "方程式" }
     ];
 
-    // 画面起動時にリストを描画
+    let startTime = 0;
+    let timerInterval = null;
+    let lastPlayedUrl = ""; // リトライ用に最後に遊んだURLを記憶
+
     function renderDashboard() {
         const pList = document.getElementById('master-problem-list');
         pList.innerHTML = '';
@@ -90,7 +107,7 @@
                         <span class="problem-title">${prob.title}</span>
                     </label>
                 </div>
-                <a class="btn-play" href="${prob.filename}">単体プレイ</a>
+                <button class="btn-play" onclick="startSinglePlay('${prob.filename}')">プレイ</button>
             `;
             pList.appendChild(item);
         });
@@ -98,59 +115,84 @@
         loadCustomCourses();
     }
 
-    // --- 💾 組み合わせの保存機能 ---
+    // --- 🎮 プレイ開始処理（親側でタイマーを回す） ---
+    function startSinglePlay(url) {
+        lastPlayedUrl = url;
+        document.getElementById('view-dashboard').classList.add('hidden');
+        document.getElementById('view-result').classList.add('hidden');
+        document.getElementById('view-game').classList.remove('hidden');
+        
+        // iframeにページを読み込ませる
+        document.getElementById('game-frame').src = url;
+
+        // タイマースタート
+        startTime = Date.now();
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            document.getElementById('parent-timer').innerText = `TIME: ${elapsed.toFixed(2)}s`;
+        }, 50);
+    }
+
+    // --- 📥 子プログラムからの「クリア合図」をキャッチする ---
+    window.addEventListener('message', (event) => {
+        if (event.data === 'GAME_CLEAR') {
+            clearInterval(timerInterval); // タイマー停止
+            const finalElapsed = (Date.now() - startTime) / 1000;
+            
+            // リザルト画面に切り替え
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-result').classList.remove('hidden');
+            document.getElementById('final-clear-time').innerText = `${finalElapsed.toFixed(2)} 秒`;
+        }
+    });
+
+    // --- 🔄 リトライ・戻る機能 ---
+    function retryLastPlay() {
+        if (lastPlayedUrl) {
+            startSinglePlay(lastPlayedUrl);
+        }
+    }
+
+    function backToDashboard() {
+        document.getElementById('view-result').classList.add('hidden');
+        document.getElementById('view-game').classList.add('hidden');
+        document.getElementById('view-dashboard').classList.remove('hidden');
+        document.getElementById('game-frame').src = ""; // iframeを空にする
+        renderDashboard();
+    }
+
+    // --- カスタムコース保存と読み込み（以前の機能を維持） ---
     function saveCustomCourse() {
         const nameInput = document.getElementById('course-name-input');
         const courseName = nameInput.value.trim();
-        if (!courseName) {
-            alert("コースの名前を入力してください！");
-            return;
-        }
-
-        // チェックされている問題のIDを回収
+        if (!courseName) { alert("コースの名前を入力してください！"); return; }
         const checkedIds = [];
         questionDatabase.forEach(prob => {
-            if (document.getElementById(`chk-${prob.id}`).checked) {
-                checkedIds.push(prob.id);
-            }
+            if (document.getElementById(`chk-${prob.id}`).checked) checkedIds.push(prob.id);
         });
-
-        if (checkedIds.length === 0) {
-            alert("組み合わせる問題を少なくとも1つチェックしてください！");
-            return;
-        }
-
-        // LocalStorageに保存
+        if (checkedIds.length === 0) { alert("問題をチェックしてください！"); return; }
         let savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
         savedCourses.push({ name: courseName, problems: checkedIds });
         localStorage.setItem('math_custom_courses', JSON.stringify(savedCourses));
-
-        // 入力をリセットして再描画
         nameInput.value = '';
-        // チェックボックスも外す
         questionDatabase.forEach(prob => document.getElementById(`chk-${prob.id}`).checked = false);
-        
         loadCustomCourses();
     }
 
-    // --- 📂 保存されたコースの読み込み表示 ---
     function loadCustomCourses() {
         const container = document.getElementById('saved-course-list');
         container.innerHTML = '';
         const savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
-
         if (savedCourses.length === 0) {
             container.innerHTML = '<p style="color:#aaa; font-size:14px; text-align:center;">保存されたカスタムコースはまだありません</p>';
             return;
         }
-
         savedCourses.forEach((course, index) => {
-            // 含まれるタグの文字列を生成
             const tagNames = course.problems.map(id => {
                 const found = questionDatabase.find(p => p.id === id);
                 return found ? `[${found.tag}]` : '';
             }).join(' ');
-
             const item = document.createElement('div');
             item.className = 'course-item';
             item.innerHTML = `
@@ -167,34 +209,25 @@
         });
     }
 
-    // --- 🚀 カスタムコースの連続プレイ機能 ---
     function playCustomCourse(index) {
         const savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
         const course = savedCourses[index];
-        
         if (!course || course.problems.length === 0) return;
-
-        // 選ばれた問題の一覧から、最初の問題のURLを取得してジャンプする
-        // ※発展形として、クエリパラメータを使って「コースプレイ中フラグ」を子に渡すことも可能です。
         const firstProbId = course.problems[0];
         const foundProb = questionDatabase.find(p => p.id === firstProbId);
-        
         if (foundProb) {
-            alert(`「${course.name}」を開始します！\nまずは最初の問題【${foundProb.title}】へ移動します。`);
-            location.href = foundProb.filename;
+            startSinglePlay(foundProb.filename);
         }
     }
 
-    // --- ❌ コースの削除 ---
     function deleteCourse(index) {
-        if(!confirm("このカスタムコースを削除してよろしいですか？")) return;
+        if(!confirm("削除してよろしいですか？")) return;
         let savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
         savedCourses.splice(index, 1);
         localStorage.setItem('math_custom_courses', JSON.stringify(savedCourses));
         loadCustomCourses();
     }
 
-    // 起動
     renderDashboard();
 </script>
 </body>
