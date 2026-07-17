@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キューブパズル</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f0f4f8; margin: 0; padding: 10px; color: #1a202c; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1 { font-size: 18px; margin: 0 0 10px 0; }
+        
+        .config-panel { background: #edf2f7; border-radius: 10px; padding: 10px; margin-bottom: 10px; text-align: left; font-size: 12px; }
+        .config-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        select { padding: 4px; border-radius: 4px; border: 1px solid #cbd5e0; font-size: 12px; max-width: 180px; }
+
+        .instruction { font-size: 20px; font-weight: bold; color: #dd6b20; margin: 8px 0; background: #fffaf0; padding: 8px; border-radius: 8px; border: 2px dashed #fbd38d; }
+        
+        .cube-layout { display: grid; gap: 2px; justify-content: center; margin: 10px auto; }
+        .cell { width: 28px; height: 28px; border: 1px solid #cbd5e0; background-color: #edf2f7; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; border-radius: 3px; box-sizing: border-box; }
+        .empty { border: none; background: transparent; }
+        
+        /* 色定義：U面(元・白)を「黒」に指定して視認性を確保 */
+        .c-U { background-color: #000000 !important; color: #ffffff !important; } /* 黒に置き換え */
+        .c-D { background-color: #ffd700 !important; color: #000000 !important; } /* 黄 */
+        .c-F { background-color: #009b48 !important; color: #ffffff !important; } /* 緑 */
+        .c-B { background-color: #00459e !important; color: #ffffff !important; } /* 青 */
+        .c-L { background-color: #ff5800 !important; color: #ffffff !important; } /* 橙 */
+        .c-R { background-color: #b71234 !important; color: #ffffff !important; } /* 赤 */
+        .c-none { background-color: #edf2f7 !important; color: #1a202c !important; border: 1px solid #cbd5e0; }
+
+        .btn-submit { background: #3182ce; color: white; border: none; padding: 12px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 5px; }
+        .result { font-size: 16px; font-weight: bold; margin-top: 10px; height: 40px; white-space: pre-line; color: #e53e3e; }
+        .correct { color: #38a169 !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧩 キューブパズル</h1>
+    
+    <div class="config-panel">
+        <div class="config-row">
+            <label>📦 キューブタイプ:</label>
+            <select id="cfg-type" onchange="updateCountOptions(); initGame();">
+                <option value="2">2 x 2 x 2</option>
+                <option value="3" selected>3 x 3 x 3</option>
+            </select>
+        </div>
+        <div class="config-row">
+            <label>🎲 回転数（手数）:</label>
+            <select id="cfg-moves" onchange="initGame()">
+                <option value="1">1手</option>
+                <option value="2" selected>2手</option>
+                <option value="3">3手</option>
+                <option value="4">4手</option>
+                <option value="5">5手</option>
+                <option value="6">6手</option>
+                <option value="7">7手</option>
+                <option value="8">8手</option>
+                <option value="9">9手</option>
+                <option value="10">10手 (脳トレ限界突破)</option>
+            </select>
+        </div>
+        <div class="config-row">
+            <label>🎨 使用する色の種類:</label>
+            <select id="cfg-colors" onchange="initGame()">
+                <option value="1">1色 (単色 - 黒のみ)</option>
+                <option value="2">2色 (黒・黄のみ)</option>
+                <option value="3">3色 (黒・黄・緑)</option>
+                <option value="4">4色 (黒・黄・緑・青)</option>
+                <option value="5">5色 (黒・黄・緑・青・橙)</option>
+                <option value="6" selected>6色フルカラー (全色)</option>
+            </select>
+        </div>
+        <div class="config-row">
+            <label>📍 画面に表示するマス数:</label>
+            <select id="cfg-count" onchange="initGame()">
+                <!-- JSで動的に生成 -->
+            </select>
+        </div>
+    </div>
+
+    <p style="margin: 0; font-weight: bold;">スコア: <span id="score">0</span></p>
+    <div class="instruction" id="command">指示: 加熱中...</div>
+    
+    <div id="game-area"></div>
+
+    <button class="btn-submit" onclick="submitAnswer()">答える</button>
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+    let score = 0;
+    let N = 3;
+    let cubeState = {};
+    let answerState = {};
+    let correctState = {};
+
+    const faceLayouts = {
+        'U': { r: 0, c: 1 },
+        'L': { r: 1, c: 0 }, 'F': { r: 1, c: 1 }, 'R': { r: 1, c: 2 }, 'B': { r: 1, c: 3 },
+        'D': { r: 2, c: 1 }
+    };
+    const colors = { 'U':'U', 'D':'D', 'F':'F', 'B':'B', 'L':'L', 'R':'R' };
+    const baseMoves = ['R', 'L', 'U', 'D', 'F', 'B'];
+
+    updateCountOptions();
+    document.getElementById('cfg-count').value = "4"; 
+    initGame();
+
+    function updateCountOptions() {
+        const type = parseInt(document.getElementById('cfg-type').value);
+        const countSelect = document.getElementById('cfg-count');
+        const maxCells = type * type * 6;
+
+        let currentVal = parseInt(countSelect.value) || 4;
+        if (currentVal > maxCells) currentVal = maxCells;
+
+        countSelect.innerHTML = "";
+        for (let i = 1; i <= maxCells; i++) {
+            let opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `${i} マス`;
+            if (i === maxCells) opt.innerText = `${i} マス (全マス表示)`;
+            countSelect.appendChild(opt);
+        }
+        countSelect.value = currentVal;
+    }
+
+    function initGame() {
+        N = parseInt(document.getElementById('cfg-type').value);
+        const colorCount = parseInt(document.getElementById('cfg-colors').value);
+        const targetCount = parseInt(document.getElementById('cfg-count').value);
+        const movesCount = parseInt(document.getElementById('cfg-moves').value);
+        
+        document.getElementById('result').innerText = "";
+        cubeState = {};
+        answerState = {};
+
+        // 1. 正しい揃った状態を作る
+        let freshState = {};
+        for (let face in faceLayouts) {
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    freshState[`${face}_${r}_${c}`] = colors[face];
+                }
+            }
+        }
+
+        // 2. 内部で20手本気で回してリアルなごちゃ混ぜ状態を作る
+        for (let i = 0; i < 20; i++) {
+            let m = baseMoves[Math.floor(Math.random() * baseMoves.length)];
+            if (Math.random() > 0.5) m += "'";
+            freshState = rotateCube(freshState, m);
+        }
+
+        // 3. 使用可能な色のリスト
+        const allColorList = ['U', 'D', 'F', 'B', 'L', 'R'];
+        let allowedColors = allColorList.slice(0, colorCount);
+
+        // 4. 全てのマスキーを配列にしてシャッフル
+        let allKeys = Object.keys(freshState);
+        for (let i = allKeys.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [allKeys[i], allKeys[j]] = [allKeys[j], allKeys[i]];
+        }
+
+        // 5. まず全マスをグレー(none)にする
+        for (let key in freshState) {
+            cubeState[key] = "none";
+        }
+
+        // 6. 指定されたマス数だけを確実に有効化する
+        for (let i = 0; i < Math.min(targetCount, allKeys.length); i++) {
+            let key = allKeys[i];
+            let actualColor = freshState[key];
+            
+            // 色制限に引っかかる場合、許可された色の中から割り当てる
+            if (!allowedColors.includes(actualColor)) {
+                actualColor = allowedColors[Math.floor(Math.random() * allowedColors.length)];
+            }
+            cubeState[key] = actualColor;
+        }
+
+        renderBoards();
+
+        // 7. 出題用の回転処理（脳内追跡用の正解データ生成）
+        correctState = { ...cubeState };
+        let seq = [];
+        for (let i = 0; i < movesCount; i++) {
+            let m = baseMoves[Math.floor(Math.random() * baseMoves.length)];
+            if (Math.random() > 0.5) m += "'";
+            seq.push(m);
+            correctState = rotateCube(correctState, m);
+        }
+        document.getElementById('command').innerText = "指示: " + seq.join(' ➔ ');
+    }
+
+    // 数理ローテーションエンジン
+    function rotateCube(state, move) {
+        let nextState = { ...state };
+        let base = move[0];
+        let isClockwise = move.length === 1;
+
+        function rotateFace(face, cw) {
+            let temp = {};
+            for(let r=0; r<N; r++){
+                for(let c=0; c<N; c++){
+                    if(cw) temp[`${face}_${c}_${N-1-r}`] = state[`${face}_${r}_${c}`];
+                    else temp[`${face}_${N-1-c}_${r}`] = state[`${face}_${r}_${c}`];
+                }
+            }
+            for(let k in temp) nextState[k] = temp[k];
+        }
+
+        if (base === 'R') {
+            rotateFace('R', isClockwise);
+            let idx = N - 1;
+            for (let i = 0; i < N; i++) {
+                if (isClockwise) {
+                    nextState[`U_${i}_${idx}`] = state[`F_${i}_${idx}`];
+                    nextState[`B_${N-1-i}_0`] = state[`U_${i}_${idx}`];
+                    nextState[`D_${i}_${idx}`] = state[`B_${N-1-i}_0`];
+                    nextState[`F_${i}_${idx}`] = state[`D_${i}_${idx}`];
+                } else {
+                    nextState[`F_${i}_${idx}`] = state[`U_${i}_${idx}`];
+                    nextState[`U_${i}_${idx}`] = state[`B_${N-1-i}_0`];
+                    nextState[`B_${N-1-i}_0`] = state[`D_${i}_${idx}`];
+                    nextState[`D_${i}_${idx}`] = state[`F_${i}_${idx}`];
+                }
+            }
+        }
+        else if (base === 'L') {
+            rotateFace('L', isClockwise);
+            for (let i = 0; i < N; i++) {
+                if (isClockwise) {
+                    nextState[`F_${i}_0`] = state[`U_${i}_0`];
+                    nextState[`D_${i}_0`] = state[`F_${i}_0`];
+                    nextState[`B_${N-1-i}_${N-1}`] = state[`D_${i}_0`];
+                    nextState[`U_${i}_0`] = state[`B_${N-1-i}_${N-1}`];
+                } else {
+                    nextState[`U_${i}_0`] = state[`F_${i}_0`];
+                    nextState[`F_${i}_0`] = state[`D_${i}_0`];
+                    nextState[`D_${i}_0`] = state[`B_${N-1-i}_${N-1}`];
+                    nextState[`B_${N-1-i}_${N-1}`] = state[`U_${i}_0`];
+                }
+            }
+        }
+        else if (base === 'U') {
+            rotateFace('U', isClockwise);
+            for (let i = 0; i < N; i++) {
+                if (isClockwise) {
+                    nextState[`F_0_${i}`] = state[`R_0_${i}`];
+                    nextState[`L_0_${i}`] = state[`F_0_${i}`];
+                    nextState[`B_0_${i}`] = state[`L_0_${i}`];
+                    nextState[`R_0_${i}`] = state[`B_0_${i}`];
+                } else {
+                    nextState[`R_0_${i}`] = state[`F_0_${i}`];
+                    nextState[`F_0_${i}`] = state[`L_0_${i}`];
+                    nextState[`L_0_${i}`] = state[`B_0_${i}`];
+                    nextState[`B_0_${i}`] = state[`R_0_${i}`];
+                }
+            }
+        }
+        else if (base === 'D') {
+            rotateFace('D', isClockwise);
+            let idx = N - 1;
+            for (let i = 0; i < N; i++) {
+                if (isClockwise) {
+                    nextState[`R_${idx}_${i}`] = state[`F_${idx}_${i}`];
+                    nextState[`B_${idx}_${i}`] = state[`R_${idx}_${i}`];
+                    nextState[`L_${idx}_${i}`] = state[`B_${idx}_${i}`];
+                    nextState[`F_${idx}_${i}`] = state[`L_${idx}_${i}`];
+                } else {
+                    nextState[`F_${idx}_${i}`] = state[`R_${idx}_${i}`];
+                    nextState[`R_${idx}_${i}`] = state[`B_${idx}_${i}`];
+                    nextState[`B_${idx}_${i}`] = state[`L_${idx}_${i}`];
+                    nextState[`L_${idx}_${i}`] = state[`F_${idx}_${i}`];
+                }
+            }
+        }
+        else if (base === 'F') {
+            rotateFace('F', isClockwise);
+            let idx = N - 1;
+            for (let i = 0; i < N; i++) {
+                if (isClockwise) {
+                    nextState[`U_${idx}_${i}`] = state[`L_${idx-i}_${idx}`];
+                    nextState[`R_${i}_0`] = state[`U_${idx}_${i}`];
+                    nextState[`D_0_${idx-i}`] = state[`R_${i}_0`];
+                    nextState[`L_${idx-i}_${idx}`] = state[`D_0_${idx-i}`];
+                } else {
+                    nextState[`L_${idx-i}_${idx}`] = state[`U_${idx}_${i}`];
+                    nextState[`U_${idx}_${i}`] = state[`R_${i}_0`];
+                    nextState[`R_${i}_0`] = state[`D_0_${idx-i}`];
+                    nextState[`D_0_${idx-i}`] = state[`L_${idx-i}_${idx}`];
+                }
+            }
+        }
+        else if (base === 'B') {
+            rotateFace('B', isClockwise);
+            let idx = N - 1;
+            for (let i = 0; i < N; i++) {
+                if (isClockwise) {
+                    nextState[`R_${idx-i}_${idx}`] = state[`D_${idx}_${i}`];
+                    nextState[`U_0_${idx-i}`] = state[`R_${idx-i}_${idx}`];
+                    nextState[`L_0_${i}`] = state[`U_0_${idx-i}`];
+                    nextState[`D_${idx}_${i}`] = state[`L_0_${i}`];
+                } else {
+                    nextState[`D_${idx}_${i}`] = state[`R_${idx-i}_${idx}`];
+                    nextState[`R_${idx-i}_${idx}`] = state[`U_0_${idx-i}`];
+                    nextState[`U_0_${idx-i}`] = state[`L_0_${i}`];
+                    nextState[`L_0_${i}`] = state[`D_${idx}_${i}`];
+                }
+            }
+        }
+        return nextState;
+    }
+
+    function renderBoards() {
+        const area = document.getElementById('game-area');
+        area.innerHTML = "";
+
+        let title1 = document.createElement('div');
+        title1.innerText = "【1. 回転前の状態（基準ガイド）】";
+        area.appendChild(title1);
+        area.appendChild(createGrid(cubeState, false));
+
+        let title2 = document.createElement('div');
+        title2.style.marginTop = "10px";
+        title2.innerText = "【2. 回答欄】タップして色を合わせてね";
+        area.appendChild(title2);
+        area.appendChild(createGrid(answerState, true));
+    }
+
+    function createGrid(stateSource, isInteractive) {
+        const grid = document.createElement('div');
+        grid.className = 'cube-layout';
+        grid.style.gridTemplateColumns = `repeat(${N * 4}, 28px)`;
+        grid.style.gridTemplateRows = `repeat(${N * 3}, 28px)`;
+
+        for (let row = 0; row < N * 3; row++) {
+            for (let col = 0; col < N * 4; col++) {
+                let fKey = null;
+                for (let f in faceLayouts) {
+                    let l = faceLayouts[f];
+                    if (row >= l.r * N && row < (l.r + 1) * N && col >= l.c * N && col < (l.c + 1) * N) {
+                        fKey = f;
+                        break;
+                    }
+                }
+
+                if (fKey) {
+                    let localR = row % N;
+                    let localC = col % N;
+                    let id = `${fKey}_${localR}_${localC}`;
+                    let cell = document.createElement('div');
+                    cell.className = 'cell';
+                    
+                    let colorVal = stateSource[id] || 'none';
+                    cell.classList.add('c-' + colorVal);
+                    cell.innerText = `${fKey}${localR}${localC}`;
+
+                    if (isInteractive) {
+                        cell.id = `ans-${id}`;
+                        cell.onclick = () => {
+                            let currentClr = answerState[id] || 'none';
+                            let colorList = ['none', 'U', 'D', 'F', 'B', 'L', 'R'];
+                            let nextIdx = (colorList.indexOf(currentClr) + 1) % colorList.length;
+                            answerState[id] = colorList[nextIdx];
+                            renderBoards();
+                        };
+                    }
+                    grid.appendChild(cell);
+                } else {
+                    let empty = document.createElement('div');
+                    empty.className = 'cell empty';
+                    grid.appendChild(empty);
+                }
+            }
+        }
+        return grid;
+    }
+
+    function submitAnswer() {
+        let isCorrect = true;
+        let totalChecked = 0;
+
+        for (let face in faceLayouts) {
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    let id = `${face}_${r}_${c}`;
+                    if (cubeState[id] !== "none") {
+                        totalChecked++;
+                        let pAns = answerState[id] || 'none';
+                        if (pAns !== correctState[id]) {
+                            isCorrect = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        let resultDiv = document.getElementById('result');
+        if (isCorrect && totalChecked > 0) {
+            score++;
+            document.getElementById('score').innerText = score;
+            resultDiv.innerText = "⭕️ 完全正解！！！完璧に追いきれましたね！";
+            resultDiv.className = "result correct";
+            setTimeout(initGame, 2000);
+        } else {
+            resultDiv.innerText = "❌ どこかのマスの色が違います！\nもう一度脳内で追跡し直してみましょう。";
+            resultDiv.className = "result";
+        }
+    }
+</script>
+
+</body>
+</html>

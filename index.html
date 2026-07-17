@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学演習プラットフォーム</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f7fafc; margin: 0; padding: 15px; color: #2d3748; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h1 { font-size: 20px; text-align: center; color: #2b6cb0; margin-top: 0; }
+        
+        .timer-box { background: #1a202c; color: #48bb78; font-family: monospace; font-size: 32px; font-weight: bold; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; }
+        .search-box { margin-bottom: 15px; }
+        input[type="text"] { width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        
+        .q-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; max-height: 250px; overflow-y: auto; }
+        .q-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .q-info { text-align: left; }
+        .q-title { font-weight: bold; font-size: 15px; }
+        .q-tag { font-size: 11px; background: #ebd3f8; color: #805ad5; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-top: 4px; display: inline-block; }
+        .no-data { text-align: center; color: #a0aec0; padding: 20px; font-size: 14px; border: 2px dashed #e2e8f0; border-radius: 8px; }
+        
+        .test-action { background: #edf2f7; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px; }
+        .btn-start { background: #3182ce; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; }
+        
+        .game-wrapper { display: none; border: 3px solid #3182ce; border-radius: 12px; overflow: hidden; background: white; margin-top: 15px; }
+        .game-header { background: #3182ce; color: white; padding: 8px 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .btn-next { background: #48bb78; color: white; border: none; padding: 6px 14px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        iframe { width: 100%; height: 500px; border: none; display: block; }
+
+        /* AI用プロンプト表示エリア */
+        .ai-prompt-box { background: #fffaf0; border: 1px solid #feebc8; border-radius: 10px; padding: 15px; margin-top: 20px; text-align: left; }
+        .ai-prompt-box h2 { font-size: 14px; color: #dd6b20; margin-top: 0; }
+        .prompt-text { background: #fff; border: 1px solid #fbd38d; padding: 10px; font-size: 12px; font-family: monospace; white-space: pre-wrap; word-break: break-all; border-radius: 6px; user-select: all; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📐 数学無限演習ダッシュボード</h1>
+    
+    <div class="timer-box" id="display-timer">00:00.00</div>
+    
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="🔍 問題名やタグで検索..." oninput="filterQuestions()">
+    </div>
+    
+    <div class="q-list" id="question-list"></div>
+    
+    <div class="test-action">
+        <button class="btn-start" onclick="startCustomTest()">選択した問題でテスト開始 ➔</button>
+    </div>
+</div>
+
+<div class="container game-wrapper" id="game-container">
+    <div class="game-header">
+        <span id="current-q-title">プレイ中の問題</span>
+        <button class="btn-next" onclick="nextTestQuestion()">次の問題へ ➔</button>
+    </div>
+    <iframe id="game-frame" src=""></iframe>
+</div>
+
+<!-- 🤖 AI指示書エリア（ここがあなたの記憶の代わりになります） -->
+<div class="container ai-prompt-box">
+    <h2>🤖 チャットが変わっても安心！AIへの問題発注用コピペ文</h2>
+    <p style="font-size: 11px; color: #718096; margin-top: 0;">以下の枠内をすべてコピーして、AI（ChatGPTやGeminiなど）にそのまま貼り付けてください。</p>
+    <div class="prompt-text" id="prompt-content">以下の条件を満たす、単一のHTMLで完結する数学のランダム問題生成ゲームを作成してください。
+
+【前提条件】
+・親画面のiframe内に埋め込んで使用します。
+・外部のCSSやJSライブラリ、画像は一切使わず、1つのHTMLファイル内にすべてのHTML, CSS, JavaScriptを完結させてください。
+・スマホで操作しやすいUI（ボタンを大きく、レスポンシブ）にしてください。
+
+【機能要件】
+・ページを開く、または問題が解かれるたびに、指定されたテーマに沿った問題がランダム（動的）に生成されること。
+・「正解・不正解」の判定ロジックを必ずJSに組み込むこと。
+・今回は以下のテーマで問題を作ってください。
+💡[ここに作ってほしいテーマ（例：集合論の和集合、写像の全単射など）を自由に書く]</div>
+</div>
+
+<script>
+    // ==========================================
+    // 🛠 問題の追加はここを増やすだけ！
+    // ==========================================
+    const questionDatabase = [
+        { filename: "equation.html", title: "連立方程式", tag: "方程式"}
+        // { filename: "q_set_1.html", title: "集合論・基本属関係ノック", tag: "集合論" },
+    ];
+
+    let selectedQuestions = [];
+    let currentTestIndex = 0;
+    let startTime = 0;
+    let timerInterval = null;
+
+    renderList(questionDatabase);
+
+    function renderList(list) {
+        const listDiv = document.getElementById('question-list');
+        listDiv.innerHTML = "";
+        if (list.length === 0) {
+            listDiv.innerHTML = `<div class="no-data">まだ問題が登録されていません。<br>コード内の「questionDatabase」にファイルを追加してください。</div>`;
+            return;
+        }
+        list.forEach(q => {
+            let card = document.createElement('div');
+            card.className = 'q-card';
+            card.innerHTML = `
+                <div class="q-info"><div class="q-title">${q.title}</div><div class="q-tag"># ${q.tag}</div></div>
+                <div><input type="checkbox" class="q-checkbox" value="${q.filename}" style="transform: scale(1.5); cursor:pointer;"></div>
+            `;
+            listDiv.appendChild(card);
+        });
+    }
+
+    function filterQuestions() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const filtered = questionDatabase.filter(q => q.title.toLowerCase().includes(query) || q.tag.toLowerCase().includes(query));
+        renderList(filtered);
+    }
+
+    function startTimer() {
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+            let diff = Date.now() - startTime;
+            let min = Math.floor(diff / 60000); let sec = Math.floor((diff % 60000) / 1000); let ms = Math.floor((diff % 1000) / 10);
+            document.getElementById('display-timer').innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+        }, 10);
+    }
+
+    function stopTimer() { clearInterval(timerInterval); }
+
+    function startCustomTest() {
+        selectedQuestions = [];
+        const checkboxes = document.querySelectorAll('.q-checkbox:checked');
+        checkboxes.forEach(cb => {
+            let match = questionDatabase.find(q => q.filename === cb.value);
+            if(match) selectedQuestions.push(match);
+        });
+        if(selectedQuestions.length === 0) { alert("問題をチェックしてください！"); return; }
+        currentTestIndex = 0;
+        document.getElementById('game-container').style.display = "block";
+        startTimer();
+        loadQuestionIntoIframe();
+        document.getElementById('game-container').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function loadQuestionIntoIframe() {
+        const currentQ = selectedQuestions[currentTestIndex];
+        document.getElementById('current-q-title').innerText = `[${currentTestIndex + 1}/${selectedQuestions.length}] ${currentQ.title}`;
+        document.getElementById('game-frame').src = currentQ.filename;
+    }
+
+    function nextTestQuestion() {
+        currentTestIndex++;
+        if(currentTestIndex < selectedQuestions.length) {
+            loadQuestionIntoIframe();
+        } else {
+            stopTimer();
+            let finalTime = document.getElementById('display-timer').innerText;
+            alert(`🎉 テスト完了！\nタイム: ${finalTime}`);
+            document.getElementById('game-container').style.display = "none";
+            document.getElementById('game-frame').src = "";
+        }
+    }
+</script>
+
+</body>
+</html>
