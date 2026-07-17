@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>連立方程式・最速暗算ノック（本番仕様）</title>
+    <title>連立方程式・最速暗算ノック（フリーズ修正版）</title>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 480px; box-sizing: border-box; }
@@ -98,7 +98,7 @@
 <script>
     let totalQuestions = 10;
     let complexity = 2;
-    let currentQuestionIndex = 0;
+    let currentQuestionIndex = 1; // 1から開始するように統一
     let correctX = 0, correctY = 0;
     let startTime = 0;
     let timerInterval = null;
@@ -204,7 +204,7 @@
     function startGame() {
         totalQuestions = parseInt(document.getElementById('config-count').value, 10);
         complexity = parseInt(complexityInput.value, 10);
-        currentQuestionIndex = 1;
+        currentQuestionIndex = 1; // 確実に1問目からスタート
 
         document.getElementById('panel-config').classList.add('hidden');
         document.getElementById('panel-game').classList.remove('hidden');
@@ -239,11 +239,12 @@
         const userY = parseInt(document.getElementById('ans-y').value, 10);
 
         if (userX === correctX && userY === correctY) {
+            // ⭐ここを修正：現在の問題数が、設定した総問題数に達したかどうかを正しく判定
             if (currentQuestionIndex < totalQuestions) {
                 currentQuestionIndex++;
                 nextQuestion();
             } else {
-                endGame();
+                endGame(); // 最後の問題を正解したら確実に終了画面へ！
             }
         } else {
             alert("答えが違います！もう一度計算してみてね。");
