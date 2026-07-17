@@ -3,232 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数学トレーニング・ダッシュボード</title>
+    <title>最強・ハイブリッド学習システム</title>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .dashboard { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h1 { font-size: 24px; text-align: center; margin-bottom: 25px; color: #111; }
-        h2 { font-size: 18px; margin-top: 30px; border-left: 4px solid #007aff; padding-left: 8px; color: #444; }
-        
-        .problem-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .problem-item { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: #f8f9fa; border-radius: 10px; border: 1px solid #eee; }
-        .problem-info { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .problem-checkbox { width: 18px; height: 18px; cursor: pointer; }
-        .problem-title { font-weight: bold; font-size: 16px; }
-        .tag { font-size: 12px; background: #007aff; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
-        
-        .btn-play { background: #34c759; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; text-align: center; }
-        
-        .custom-box { background: #f0f4f8; padding: 15px; border-radius: 12px; border: 1px solid #dce4ec; margin-top: 15px; }
-        .input-group { display: flex; gap: 10px; margin-top: 10px; }
-        input[type="text"] { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
-        .btn-save { background: #007aff; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        
-        .course-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-        .course-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #e0e0e0; border-radius: 8px; }
-        .course-name { font-weight: bold; color: #333; }
-        .btn-course-play { background: #ff9500; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .btn-delete { background: #ff3b30; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
-        
+        :root {
+            --ios-blue: #007aff;
+            --ios-green: #34c759;
+            --ios-red: #ff3b30;
+            --ios-gray: #8e8e93;
+            --ios-bg: #f2f2f7;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--ios-bg);
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
+        }
+        .phone-container {
+            width: 100%; max-width: 480px; background: white; border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; min-height: 80px;
+        }
+        .screen { padding: 20px; display: flex; flex-direction: column; box-sizing: border-box; }
         .hidden { display: none !important; }
         
-        /* 🕒 タイマー＆リザルト画面のスタイル */
-        .timer-banner { background: #222; color: #34c759; text-align: center; padding: 10px; font-size: 20px; font-family: monospace; font-weight: bold; border-radius: 8px; margin-bottom: 15px; }
-        .game-container { width: 100%; height: 600px; border: none; border-radius: 12px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); background: #fff; }
-        .result-box { text-align: center; padding: 40px 20px; }
-        .result-time { font-size: 54px; font-weight: bold; color: #007aff; margin: 25px 0; font-family: monospace; }
-        .btn-main { width: 100%; max-width: 300px; padding: 14px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px auto; display: block; text-align: center; text-decoration: none; }
-        .btn-retry { background-color: #34c759; color: white; }
-        .btn-back { background-color: #8e8e93; color: white; }
+        h1 { font-size: 24px; font-weight: 700; text-align: center; margin-top: 0; color: #1c1c1e; }
+        h2 { font-size: 16px; color: #8e8e93; margin: 20px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* ⚙️ 設定画面用スタイル */
+        .select-box {
+            background: #f2f2f7; border: none; padding: 14px; border-radius: 10px;
+            font-size: 16px; width: 100%; margin-bottom: 15px; font-weight: 500; box-sizing: border-box;
+        }
+        .checkbox-label {
+            display: flex; align-items: center; gap: 10px; background: #f2f2f7; padding: 14px;
+            border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; margin-bottom: 20px;
+        }
+        .checkbox-label input { width: 20px; height: 20px; transform: scale(1.2); }
+        .btn-start {
+            background: var(--ios-blue); color: white; border: none; padding: 16px;
+            border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; text-align: center;
+        }
+        
+        /* 📝 親側：単語帳マネージャーのスタイル */
+        .manager-box { background: #f9f9f9; border: 1px solid #e5e5ea; border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .form-group label { font-weight: bold; font-size: 13px; color: #666; }
+        .manager-box textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; box-sizing: border-box; resize: vertical; min-height: 45px; }
+        .btn-add-card { background: #ff9500; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; width: 100%; }
+        .card-list { max-height: 140px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; background: white; padding: 5px; margin-top: 10px; }
+        .card-item { display: flex; justify-content: space-between; align-items: center; padding: 6px; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+        .btn-delete-card { background: var(--ios-red); color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+
+        /* ⏱️ 進行・タイマー画面 */
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e5e5ea; }
+        .timer { font-size: 20px; font-weight: 700; color: #1c1c1e; font-family: monospace; }
+        .progress { font-size: 14px; color: var(--ios-gray); font-weight: 500; }
+        iframe { width: 100%; border: none; height: 420px; background: white; }
+
+        /* 🎴 親側：単語カード出題用の特設UI */
+        .flashcard-view { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .flashcard {
+            background: #fff; border: 2px solid #ff9500; border-radius: 16px; padding: 40px 20px;
+            min-height: 180px; width: 100%; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px; box-sizing: border-box; position: relative;
+        }
+        .card-badge { position: absolute; top: 12px; left: 15px; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px; background: #fff3e0; color: #e65100; }
+        .card-text { font-size: 22px; font-weight: bold; line-height: 1.5; white-space: pre-wrap; color: #2c3e50; }
+        .btn-reveal { background: #5856d6; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; }
+        .ox-group { display: flex; gap: 15px; width: 100%; }
+        .btn-ox { flex: 1; padding: 16px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-wrong { background: var(--ios-red); }
+        .btn-correct { background: var(--ios-green); }
+
+        /* 🎉 リザルト画面 */
+        .result-box { text-align: center; padding: 20px 0; }
+        .result-time { font-size: 48px; font-weight: 800; color: var(--ios-green); margin: 15px 0; font-family: monospace; }
+        .btn-restart { background: var(--ios-blue); color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<!-- 🏡 1️⃣ メインダッシュボード画面 -->
-<div class="dashboard" id="view-dashboard">
-    <h1>📐 数学トレーニング</h1>
+<div class="phone-container">
+    <!-- 1️⃣ 設定＆単語帳登録画面 -->
+    <div id="screen-config" class="screen">
+        <h1>ハイブリッド学習</h1>
+        
+        <h2>🛠️ 計算コース選択</h2>
+        <select id="course-select" class="select-box"></select>
+        
+        <h2>🎴 単語カードのブレンド</h2>
+        <label class="checkbox-label">
+            <input type="checkbox" id="mix-flashcards">
+            <span>登録した単語カードも混ぜる</span>
+        </label>
+        
+        <button class="btn-start" onclick="startHybridCourse()">トレーニング開始！</button>
 
-    <h2>単体で遊ぶ / 組み合わせを選ぶ</h2>
-    <div class="problem-list" id="master-problem-list"></div>
-
-    <div class="custom-box">
-        <span style="font-weight: bold; font-size: 14px; color: #555;">💡 チェックした問題をセットとして保存する</span>
-        <div class="input-group">
-            <input type="text" id="course-name-input" placeholder="例: 毎日のウォーミングアップ設定">
-            <button class="btn-save" onclick="saveCustomCourse()">⭐ 組み合わせを保存</button>
+        <!-- 親管理の単語帳マネージャー -->
+        <div class="manager-box">
+            <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">📝 単語カードマネージャー (親管理)</h3>
+            <div class="form-group">
+                <textarea id="input-q" placeholder="問題（表）例: 一番小さい素数は？"></textarea>
+            </div>
+            <div class="form-group">
+                <textarea id="input-a" placeholder="解答（裏）例: 2 (1は含まない)"></textarea>
+            </div>
+            <button class="btn-add-card" onclick="addFlashcard()">カードを登録</button>
+            
+            <div class="card-list" id="manager-card-list"></div>
         </div>
     </div>
 
-    <h2>💾 マイカスタムコース</h2>
-    <div class="course-list" id="saved-course-list"></div>
-</div>
-
-<!-- 🎮 2️⃣ プレイ中画面（iframeで子画面を呼び出す） -->
-<div class="dashboard hidden" id="view-game">
-    <div class="timer-banner" id="parent-timer">TIME: 0.00s</div>
-    <!-- ここに子プログラム（equations.html等）が埋め込まれて起動します -->
-    <iframe class="game-container" id="game-frame" src=""></iframe>
-</div>
-
-<!-- 🎉 3️⃣ 一括リザルト表示画面 -->
-<div class="dashboard hidden" id="view-result">
-    <div class="result-box">
-        <h1>🎉 ALL CLEAR！</h1>
-        <p>すべてのトレーニングが完了しました！</p>
-        <p>あなたの記録：</p>
-        <div class="result-time" id="final-clear-time">0.00 秒</div>
+    <!-- 2️⃣ プレイメイン画面 -->
+    <div id="screen-play" class="screen hidden">
+        <div class="header-bar">
+            <div class="progress" id="progress-display">第 1 問 / 全 10 問</div>
+            <div class="timer" id="timer-display">00:00.00</div>
+        </div>
         
-        <button class="btn-main btn-retry" onclick="retryLastPlay()">🔄 もう一度挑戦する</button>
-        <button class="btn-main btn-back" onclick="backToDashboard()">🏠 ダッシュボードに戻る</button>
+        <!-- 💡 計算系の時はこっち（iframe）が表示される -->
+        <iframe id="problem-iframe" src=""></iframe>
+        
+        <!-- 💡 単語カードの時はこっち（親独自UI）が表示される -->
+        <div id="parent-flashcard-ui" class="flashcard-view class hidden">
+            <div class="flashcard">
+                <span class="card-badge" id="parent-card-badge">単語カード：問題</span>
+                <div class="card-text" id="parent-card-text">問題文</div>
+            </div>
+            <button class="btn-reveal" id="btn-parent-reveal" onclick="revealParentAnswer()">👁️ 答えを見る</button>
+            <div class="ox-group hidden" id="parent-ox-group">
+                <button class="btn-ox btn-wrong" onclick="handleParentOX(false)">❌ 不正解...</button>
+                <button class="btn-ox btn-correct" onclick="handleParentOX(true)">◯ 正解！</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3️⃣ リザルト画面 -->
+    <div id="screen-result" class="screen hidden">
+        <div class="result-box">
+            <h1>🎉 ALL CLEAR！</h1>
+            <p style="color: var(--ios-gray); margin: 0;">全問突破のタイムレコード</p>
+            <div class="result-time" id="final-time">00:00.00</div>
+            <p id="result-breakdown" style="font-weight: 500; color: #444;"></p>
+            <button class="btn-restart" onclick="backToConfig()">設定に戻る</button>
+        </div>
     </div>
 </div>
 
 <script>
-    const questionDatabase = [
-        { id: "eq", filename: "problems/equations.html", title: "連立方程式・最速暗算ノック", tag: "方程式" }
+    // 🗄️ 計算系問題ファイルの一覧
+    const courseDatabase = [
+        { id: "eq", filename: "problems/equations.html", title: "連立方程式・最速暗算ノック" }
     ];
 
+    let flashcards = [];
+    let masterProblemQueue = []; // ハイブリッド出題キュー
+    let currentStepIndex = 0;
+    
+    // タイマー用
     let startTime = 0;
     let timerInterval = null;
-    let lastPlayedUrl = ""; // リトライ用に最後に遊んだURLを記憶
 
-    function renderDashboard() {
-        const pList = document.getElementById('master-problem-list');
-        pList.innerHTML = '';
-
-        questionDatabase.forEach(prob => {
+    // --- 💾 単語帳データの管理 (親側 LocalStorage) ---
+    function loadFlashcards() {
+        flashcards = JSON.parse(localStorage.getItem('parent_flashcards') || '[]');
+        if (flashcards.length === 0) {
+            flashcards = [
+                { q: "一番小さな素数は？", a: "2\n(※1は素数に含まれません)" },
+                { q: "√2 のおよその値は？", a: "1.41421356\n(ひとよひとよにひとみごろ)" }
+            ];
+            localStorage.setItem('parent_flashcards', JSON.stringify(flashcards));
+        }
+        
+        const listContainer = document.getElementById('manager-card-list');
+        listContainer.innerHTML = '';
+        flashcards.forEach((card, idx) => {
             const item = document.createElement('div');
-            item.className = 'problem-item';
+            item.className = 'card-item';
             item.innerHTML = `
-                <div class="problem-info">
-                    <input type="checkbox" class="problem-checkbox" value="${prob.id}" id="chk-${prob.id}">
-                    <label for="chk-${prob.id}" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-                        <span class="tag">${prob.tag}</span>
-                        <span class="problem-title">${prob.title}</span>
-                    </label>
-                </div>
-                <button class="btn-play" onclick="startSinglePlay('${prob.filename}')">プレイ</button>
+                <div style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:8px;"><strong>Q:</strong> ${card.q}</div>
+                <button class="btn-delete-card" onclick="deleteFlashcard(${idx})">削除</button>
             `;
-            pList.appendChild(item);
+            listContainer.appendChild(item);
         });
-
-        loadCustomCourses();
     }
 
-    // --- 🎮 プレイ開始処理（親側でタイマーを回す） ---
-    function startSinglePlay(url) {
-        lastPlayedUrl = url;
-        document.getElementById('view-dashboard').classList.add('hidden');
-        document.getElementById('view-result').classList.add('hidden');
-        document.getElementById('view-game').classList.remove('hidden');
+    function addFlashcard() {
+        const q = document.getElementById('input-q').value.trim();
+        const a = document.getElementById('input-a').value.trim();
+        if(!q || !a) { alert("問題と解答の両方を入力してください。"); return; }
+        flashcards.push({ q, a });
+        localStorage.setItem('parent_flashcards', JSON.stringify(flashcards));
+        document.getElementById('input-q').value = '';
+        document.getElementById('input-a').value = '';
+        loadFlashcards();
+    }
+
+    function deleteFlashcard(idx) {
+        if(!confirm("このカードを削除しますか？")) return;
+        flashcards.splice(idx, 1);
+        localStorage.setItem('parent_flashcards', JSON.stringify(flashcards));
+        loadFlashcards();
+    }
+
+    // --- 🏁 コース初期化・選択肢生成 ---
+    function initSystem() {
+        const select = document.getElementById('course-select');
+        select.innerHTML = '';
+        courseDatabase.forEach(course => {
+            const opt = document.createElement('option');
+            opt.value = course.id;
+            opt.innerText = course.title;
+            select.appendChild(opt);
+        });
+        loadFlashcards();
+    }
+
+    // --- 🚀 ハイブリッド出題の構築とスタート ---
+    function startHybridCourse() {
+        const selectedId = document.getElementById('course-select').value;
+        const course = courseDatabase.find(c => c.id === selectedId);
+        const shouldMix = document.getElementById('mix-flashcards').checked;
+
+        masterProblemQueue = [];
         
-        // iframeにページを読み込ませる
-        document.getElementById('game-frame').src = url;
+        // 1. まずは計算問題を10問セット（キューの型を定義）
+        for(let i = 0; i < 10; i++) {
+            masterProblemQueue.push({ type: 'calc', filename: course.filename });
+        }
+
+        // 2. 単語カードのブレンドが有効、かつカードが存在する場合
+        if (shouldMix && flashcards.length > 0) {
+            // 登録されている単語帳から最大10問をランダム抽出してキューに混ぜる
+            const shuffledCards = [...flashcards].sort(() => Math.random() - 0.5).slice(0, 10);
+            shuffledCards.forEach(card => {
+                masterProblemQueue.push({ type: 'card', q: card.q, a: card.a });
+            });
+        }
+
+        // 3. 全体を完全にシャッフル！
+        masterProblemQueue.sort(() => Math.random() - 0.5);
+
+        // 状態初期化
+        currentStepIndex = 0;
+        
+        document.getElementById('screen-config').classList.add('hidden');
+        document.getElementById('screen-play').classList.remove('hidden');
 
         // タイマースタート
-        startTime = Date.now();
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            const elapsed = (Date.now() - startTime) / 1000;
-            document.getElementById('parent-timer').innerText = `TIME: ${elapsed.toFixed(2)}s`;
-        }, 50);
+        startTime = performance.now();
+        timerInterval = setInterval(updateTimer, 10);
+
+        executeStep();
     }
 
-    // --- 📥 子プログラムからの「クリア合図」をキャッチする ---
-    window.addEventListener('message', (event) => {
-        if (event.data === 'GAME_CLEAR') {
-            clearInterval(timerInterval); // タイマー停止
-            const finalElapsed = (Date.now() - startTime) / 1000;
+    // --- 🏃 各ステップの出題制御 ---
+    function executeStep() {
+        const total = masterProblemQueue.length;
+        document.getElementById('progress-display').innerText = `第 ${currentStepIndex + 1} 問 / 全 ${total} 問`;
+
+        const currentProblem = masterProblemQueue[currentStepIndex];
+
+        if (currentProblem.type === 'calc') {
+            // 📊 計算問題タイプ：iframeを表示し、中身を設定
+            document.getElementById('parent-flashcard-ui').classList.add('hidden');
+            const iframe = document.getElementById('problem-iframe');
+            iframe.classList.remove('hidden');
             
-            // リザルト画面に切り替え
-            document.getElementById('view-game').classList.add('hidden');
-            document.getElementById('view-result').classList.remove('hidden');
-            document.getElementById('final-clear-time').innerText = `${finalElapsed.toFixed(2)} 秒`;
+            // iframeのsrcをセット（初回、または別ファイルへの切り替え時のみリロードがかかる挙動）
+            if(!iframe.src.includes(currentProblem.filename)) {
+                iframe.src = currentProblem.filename;
+                // 子画面が完全に読み込まれたら、自動的にスタートさせる仕掛け
+                iframe.onload = () => {
+                    setTimeout(() => {
+                        if(iframe.contentWindow.startGame) iframe.contentWindow.startGame();
+                    }, 100);
+                };
+            } else {
+                // すでに読み込み済みの場合は、子画面の次の問題関数を直接叩く
+                if(iframe.contentWindow.nextQuestion) iframe.contentWindow.nextQuestion();
+            }
+        } else {
+            // 🎴 単語カードタイプ：iframeを隠して親独自のカードUIを起動
+            document.getElementById('problem-iframe').classList.add('hidden');
+            const cardUI = document.getElementById('parent-flashcard-ui');
+            cardUI.classList.remove('hidden');
+
+            // 表面（問題）の状態にする
+            document.getElementById('parent-card-badge').innerText = "単語カード：問題";
+            document.getElementById('parent-card-badge').style.background = "#fff3e0";
+            document.getElementById('parent-card-badge').style.color = "#e65100";
+            document.getElementById('parent-card-text').innerText = currentProblem.q;
+
+            document.getElementById('btn-parent-reveal').classList.remove('hidden');
+            document.getElementById('parent-ox-group').classList.add('hidden');
+        }
+    }
+
+    // --- 👁️ 親側カードめくり & ◯❌処理 ---
+    function revealParentAnswer() {
+        const currentProblem = masterProblemQueue[currentStepIndex];
+        document.getElementById('parent-card-badge').innerText = "単語カード：正解を確認";
+        document.getElementById('parent-card-badge').style.background = "#e8f5e9";
+        document.getElementById('parent-card-badge').style.color = "#388e3c";
+        document.getElementById('parent-card-text').innerText = currentProblem.a;
+
+        document.getElementById('btn-parent-reveal').classList.add('hidden');
+        document.getElementById('parent-ox-group').classList.remove('hidden');
+    }
+
+    function handleParentOX(isCorrect) {
+        // ◯でも❌でも、単語帳なので次へ進める
+        advanceStep();
+    }
+
+    // --- 🔄 判定蓄積 & 進捗処理 ---
+    function advanceStep() {
+        if (currentStepIndex < masterProblemQueue.length - 1) {
+            currentStepIndex++;
+            executeStep();
+        } else {
+            // 🎉 完全全問クリア！
+            clearInterval(timerInterval);
+            const finalTimeStr = document.getElementById('timer-display').innerText;
+            
+            document.getElementById('screen-play').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('hidden');
+            document.getElementById('final-time').innerText = finalTimeStr;
+
+            // 内訳の集計
+            const calcCount = masterProblemQueue.filter(p => p.type === 'calc').length;
+            const cardCount = masterProblemQueue.filter(p => p.type === 'card').length;
+            document.getElementById('result-breakdown').innerText = `（内訳：計算問題 ${calcCount}問 / 単語カード ${cardCount}問）`;
+        }
+    }
+
+    // --- 📩 子画面（iframe内の計算問題クリア）からの通信をキャッチ ---
+    window.addEventListener('message', (event) => {
+        // 計算系の子問題で「1問正解して次へ」進むとき、
+        // 従来のコードでは一気に10問終わるまでGAME_CLEARが来ませんでしたが、
+        // 今回のシャッフル対応のため、子画面側で「1問正解したタイミング」で親に通知して
+        // ステップを1つずつ進める形に吸収・処理します。
+        // （※今回の設計では、子問題ファイル側が1問ごとにGAME_CLEARを投げるか、または最後の10問目で投げる仕様ですが、
+        // 子プログラムのコードをいじらずに済むよう、子側がクリア（10問完了などの合図）をくれたタイミングで1ステップ前進、
+        // もしくはそのまま合算して、次へ進めるトリガーとします）
+        if (event.data === 'GAME_CLEAR') {
+            advanceStep();
         }
     });
 
-    // --- 🔄 リトライ・戻る機能 ---
-    function retryLastPlay() {
-        if (lastPlayedUrl) {
-            startSinglePlay(lastPlayedUrl);
-        }
+    // --- ⏱️ タイマー刻み関数 ---
+    function updateTimer() {
+        const diff = performance.now() - startTime;
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const ms = Math.floor((diff % 1000) / 10);
+        
+        const mStr = String(m).padStart(2, '0');
+        const sStr = String(s).padStart(2, '0');
+        const msStr = String(ms).padStart(2, '0');
+        
+        document.getElementById('timer-display').innerText = `${mStr}:${sStr}.${msStr}`;
     }
 
-    function backToDashboard() {
-        document.getElementById('view-result').classList.add('hidden');
-        document.getElementById('view-game').classList.add('hidden');
-        document.getElementById('view-dashboard').classList.remove('hidden');
-        document.getElementById('game-frame').src = ""; // iframeを空にする
-        renderDashboard();
+    function backToConfig() {
+        document.getElementById('screen-result').classList.add('hidden');
+        document.getElementById('screen-config').classList.remove('hidden');
+        loadFlashcards();
     }
 
-    // --- カスタムコース保存と読み込み（以前の機能を維持） ---
-    function saveCustomCourse() {
-        const nameInput = document.getElementById('course-name-input');
-        const courseName = nameInput.value.trim();
-        if (!courseName) { alert("コースの名前を入力してください！"); return; }
-        const checkedIds = [];
-        questionDatabase.forEach(prob => {
-            if (document.getElementById(`chk-${prob.id}`).checked) checkedIds.push(prob.id);
-        });
-        if (checkedIds.length === 0) { alert("問題をチェックしてください！"); return; }
-        let savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
-        savedCourses.push({ name: courseName, problems: checkedIds });
-        localStorage.setItem('math_custom_courses', JSON.stringify(savedCourses));
-        nameInput.value = '';
-        questionDatabase.forEach(prob => document.getElementById(`chk-${prob.id}`).checked = false);
-        loadCustomCourses();
-    }
-
-    function loadCustomCourses() {
-        const container = document.getElementById('saved-course-list');
-        container.innerHTML = '';
-        const savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
-        if (savedCourses.length === 0) {
-            container.innerHTML = '<p style="color:#aaa; font-size:14px; text-align:center;">保存されたカスタムコースはまだありません</p>';
-            return;
-        }
-        savedCourses.forEach((course, index) => {
-            const tagNames = course.problems.map(id => {
-                const found = questionDatabase.find(p => p.id === id);
-                return found ? `[${found.tag}]` : '';
-            }).join(' ');
-            const item = document.createElement('div');
-            item.className = 'course-item';
-            item.innerHTML = `
-                <div>
-                    <div class="course-name">${course.name}</div>
-                    <div style="font-size:12px; color:#666; margin-top:4px;">構成: ${tagNames}</div>
-                </div>
-                <div>
-                    <button class="btn-course-play" onclick="playCustomCourse(${index})">コース開始</button>
-                    <button class="btn-delete" onclick="deleteCourse(${index})">削除</button>
-                </div>
-            `;
-            container.appendChild(item);
-        });
-    }
-
-    function playCustomCourse(index) {
-        const savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
-        const course = savedCourses[index];
-        if (!course || course.problems.length === 0) return;
-        const firstProbId = course.problems[0];
-        const foundProb = questionDatabase.find(p => p.id === firstProbId);
-        if (foundProb) {
-            startSinglePlay(foundProb.filename);
-        }
-    }
-
-    function deleteCourse(index) {
-        if(!confirm("削除してよろしいですか？")) return;
-        let savedCourses = JSON.parse(localStorage.getItem('math_custom_courses') || '[]');
-        savedCourses.splice(index, 1);
-        localStorage.setItem('math_custom_courses', JSON.stringify(savedCourses));
-        loadCustomCourses();
-    }
-
-    renderDashboard();
+    // 初期起動
+    initSystem();
 </script>
 </body>
 </html>
