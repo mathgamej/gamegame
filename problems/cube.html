@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>キューブパズル</title>
+    <title>キューブパズル (デバッグ機能付き)</title>
     <style>
         body { font-family: sans-serif; text-align: center; background-color: #f0f4f8; margin: 0; padding: 10px; color: #1a202c; }
         .container { max-width: 500px; margin: 0 auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -19,16 +19,17 @@
         .cell { width: 28px; height: 28px; border: 1px solid #cbd5e0; background-color: #edf2f7; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; border-radius: 3px; box-sizing: border-box; }
         .empty { border: none; background: transparent; }
         
-        /* 色定義：U面(元・白)を「黒」に指定して視認性を確保 */
-        .c-U { background-color: #000000 !important; color: #ffffff !important; } /* 黒に置き換え */
-        .c-D { background-color: #ffd700 !important; color: #000000 !important; } /* 黄 */
-        .c-F { background-color: #009b48 !important; color: #ffffff !important; } /* 緑 */
-        .c-B { background-color: #00459e !important; color: #ffffff !important; } /* 青 */
-        .c-L { background-color: #ff5800 !important; color: #ffffff !important; } /* 橙 */
-        .c-R { background-color: #b71234 !important; color: #ffffff !important; } /* 赤 */
+        .c-U { background-color: #000000 !important; color: #ffffff !important; }
+        .c-D { background-color: #ffd700 !important; color: #000000 !important; }
+        .c-F { background-color: #009b48 !important; color: #ffffff !important; }
+        .c-B { background-color: #00459e !important; color: #ffffff !important; }
+        .c-L { background-color: #ff5800 !important; color: #ffffff !important; }
+        .c-R { background-color: #b71234 !important; color: #ffffff !important; }
         .c-none { background-color: #edf2f7 !important; color: #1a202c !important; border: 1px solid #cbd5e0; }
 
         .btn-submit { background: #3182ce; color: white; border: none; padding: 12px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 5px; }
+        /* 🔧 デバッグボタン用のスタイル追加 */
+        .btn-debug { background: #e53e3e; color: white; border: none; padding: 6px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 5px; }
         .result { font-size: 16px; font-weight: bold; margin-top: 10px; height: 40px; white-space: pre-line; color: #e53e3e; }
         .correct { color: #38a169 !important; }
     </style>
@@ -75,7 +76,6 @@
         <div class="config-row">
             <label>📍 画面に表示するマス数:</label>
             <select id="cfg-count" onchange="initGame()">
-                <!-- JSで動的に生成 -->
             </select>
         </div>
     </div>
@@ -86,6 +86,8 @@
     <div id="game-area"></div>
 
     <button class="btn-submit" onclick="submitAnswer()">答える</button>
+    <!-- 🔧 体(body)の部分に「答えを表示」ボタンを追加 -->
+    <button class="btn-debug" onclick="showAnswer()">🛠️ デバッグ：回答欄に現在の正解を反映する</button>
     <div class="result" id="result"></div>
 </div>
 
@@ -137,7 +139,6 @@
         cubeState = {};
         answerState = {};
 
-        // 1. 正しい揃った状態を作る
         let freshState = {};
         for (let face in faceLayouts) {
             for (let r = 0; r < N; r++) {
@@ -147,35 +148,29 @@
             }
         }
 
-        // 2. 内部で20手本気で回してリアルなごちゃ混ぜ状態を作る
         for (let i = 0; i < 20; i++) {
             let m = baseMoves[Math.floor(Math.random() * baseMoves.length)];
             if (Math.random() > 0.5) m += "'";
             freshState = rotateCube(freshState, m);
         }
 
-        // 3. 使用可能な色のリスト
         const allColorList = ['U', 'D', 'F', 'B', 'L', 'R'];
         let allowedColors = allColorList.slice(0, colorCount);
 
-        // 4. 全てのマスキーを配列にしてシャッフル
         let allKeys = Object.keys(freshState);
         for (let i = allKeys.length - 1; i > 0; i--) {
             let j = Math.floor(Math.random() * (i + 1));
             [allKeys[i], allKeys[j]] = [allKeys[j], allKeys[i]];
         }
 
-        // 5. まず全マスをグレー(none)にする
         for (let key in freshState) {
             cubeState[key] = "none";
         }
 
-        // 6. 指定されたマス数だけを確実に有効化する
         for (let i = 0; i < Math.min(targetCount, allKeys.length); i++) {
             let key = allKeys[i];
             let actualColor = freshState[key];
             
-            // 色制限に引っかかる場合、許可された色の中から割り当てる
             if (!allowedColors.includes(actualColor)) {
                 actualColor = allowedColors[Math.floor(Math.random() * allowedColors.length)];
             }
@@ -184,7 +179,6 @@
 
         renderBoards();
 
-        // 7. 出題用の回転処理（脳内追跡用の正解データ生成）
         correctState = { ...cubeState };
         let seq = [];
         for (let i = 0; i < movesCount; i++) {
@@ -379,6 +373,14 @@
             }
         }
         return grid;
+    }
+
+    // 🔧 脳みそ(script)部分に「答えのデータを回答用配列にコピーして再描画する」関数を追加
+    function showAnswer() {
+        // システム内部が計算した「正解の状態」を、そのままユーザーの回答状態に上書きコピーする
+        answerState = { ...correctState };
+        // 画面を再描画して色を反映させる
+        renderBoards();
     }
 
     function submitAnswer() {

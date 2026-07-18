@@ -3,222 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>連立方程式・最速暗算ノック（バグ修正版）</title>
+    <title>暗記・記述式 単語帳トレーニング</title>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: #333; }
         .container { width: 100%; max-width: 480px; box-sizing: border-box; }
         h1 { font-size: 20px; color: #1a1a1a; margin-top: 0; text-align: center; }
-        .config-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-        .config-item { display: flex; flex-direction: column; gap: 6px; }
-        label { font-weight: bold; color: #4a4a4a; font-size: 14px; }
-        select, input[type="range"] { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; width: 100%; box-sizing: border-box; }
-        .range-value { font-weight: bold; color: #007aff; text-align: right; margin-top: -4px; }
-        .preset-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
-        .btn-preset { background: #e4e6eb; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; }
-        .btn-save { background: #34c759 !important; color: white; }
-        .btn-main { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; text-align: center; }
-        .btn-start { background-color: #007aff; color: white; }
-        .btn-action { background-color: #34c759; color: white; margin-top: 15px; }
+        h2 { font-size: 15px; margin-top: 20px; color: #555; border-left: 3px solid #ff9500; padding-left: 6px; }
+        
+        /* ⚙️ 管理・編集モードのスタイル */
+        .editor-box { background: #f8f9fa; border: 1px solid #e5e5ea; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        label { font-weight: bold; font-size: 13px; color: #666; }
+        textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; box-sizing: border-box; resize: vertical; min-height: 50px; }
+        .btn-main { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; transition: background 0.2s; }
+        .btn-add { background-color: #ff9500; color: white; }
+        .btn-start { background-color: #007aff; color: white; margin-top: 10px; }
+        
+        /* 🗂️ 登録済みカードリスト */
+        .card-list { max-height: 180px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; background: white; padding: 5px; }
+        .card-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+        .card-item:last-child { border-bottom: none; }
+        .btn-delete { background: #ff3b30; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+
+        /* 🎴 プレイモードのスタイル */
         .hidden { display: none !important; }
-        .game-status { display: flex; justify-content: space-between; color: #666; font-size: 14px; margin-bottom: 15px; }
-        .equation-box { font-size: 28px; font-weight: bold; text-align: center; margin: 20px 0; line-height: 1.6; color: #2c3e50; background: #f8f9fa; padding: 20px; border-radius: 12px; }
-        .input-group { display: flex; gap: 15px; margin-bottom: 20px; }
-        .answer-field { flex: 1; text-align: center; }
+        .game-status { display: flex; justify-content: space-between; color: #666; font-size: 13px; margin-bottom: 15px; }
+        
+        /* フラッシュカード本体 */
+        .flashcard { background: #fff; border: 2px solid #007aff; border-radius: 16px; padding: 30px 20px; min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
+        .card-type { position: absolute; top: 10px; left: 15px; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
+        .type-q { background: #e1f5fe; color: #0288d1; }
+        .type-a { background: #e8f5e9; color: #388e3c; }
+        .card-text { font-size: 20px; font-weight: bold; line-height: 1.5; word-break: break-all; white-space: pre-wrap; }
+        
+        /* 操作ボタン */
+        .btn-reveal { background-color: #5856d6; color: white; }
+        .action-group { display: flex; gap: 15px; width: 100%; }
+        .btn-ox { flex: 1; padding: 14px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-correct { background-color: #34c759; }
+        .btn-wrong { background-color: #ff3b30; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 1️⃣ 設定画面 -->
+    <!-- 1️⃣ 設定＆カード編集画面 -->
     <div id="panel-config">
-        <h1>連立方程式ノック 設定</h1>
-        <div class="config-section">
-            <div class="config-item">
-                <label for="config-count">問題数</label>
-                <select id="config-count">
-                    <option value="10" selected>10問</option>
-                    <option value="20">20問</option>
-                    <option value="50">50問</option>
-                    <option value="100">100問</option>
-                </select>
+        <h1>単語帳トレーニング</h1>
+        
+        <div class="editor-box">
+            <h2>📝 新しいカードを追加</h2>
+            <div class="form-group">
+                <label for="input-q">問題文（表）</label>
+                <textarea id="input-q" placeholder="例: 素数とは？ / √3 の値は？"></textarea>
             </div>
-            <div class="config-item">
-                <label for="config-complexity">問題の複雑さ (レベル1〜5)</label>
-                <input type="range" id="config-complexity" min="1" max="5" value="2">
-                <div class="range-value" id="complexity-display">レベル 2</div>
+            <div class="form-group">
+                <label for="input-a">解答・解説（裏）</label>
+                <textarea id="input-a" placeholder="例: 1とその数自身でしか割り切れない2以上の自然数 / 1.7320508"></textarea>
             </div>
-            <div class="config-item">
-                <label>マイお気に入り設定</label>
-                <div class="preset-container" id="preset-list"></div>
-                <div class="preset-container" style="margin-top: 10px;">
-                    <button class="btn-preset btn-save" onclick="saveCurrentPreset()">⭐ 現在の設定を保存</button>
-                </div>
-            </div>
+            <button class="btn-main btn-add" onclick="addCard()">➕ カードを登録</button>
         </div>
-        <button class="btn-main btn-start" onclick="startGame()">スタート！</button>
+
+        <h2>🗂️ 登録済みの問題一覧 (<span id="card-count">0</span>)</h2>
+        <div class="card-list" id="card-list-container"></div>
+
+        <button class="btn-main btn-start" id="btn-play-start" onclick="startPlay()">単語帳スタート！</button>
     </div>
 
     <!-- 2️⃣ プレイ画面 -->
     <div id="panel-game" class="hidden">
         <div class="game-status">
             <span id="progress-text">第 1 / 10 問</span>
-            <span>親画面でタイム計測中</span>
+            <span id="score-text">正解: 0</span>
         </div>
-        <div class="equation-box" id="equation-display">読み込み中...</div>
-        <div class="input-group">
-            <div class="answer-field">
-                <label for="ans-x">x =</label>
-                <input type="number" id="ans-x" placeholder="x" style="width:100%; padding:10px; font-size:18px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box;">
-            </div>
-            <div class="answer-field">
-                <label for="ans-y">y =</label>
-                <input type="number" id="ans-y" placeholder="y" style="width:100%; padding:10px; font-size:18px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box;">
-            </div>
+        
+        <!-- カード表面（問題） -->
+        <div class="flashcard" id="card-display">
+            <span class="card-type type-q" id="card-tag">QUESTION</span>
+            <div class="card-text" id="card-content">問題文がここに表示されます</div>
         </div>
-        <button class="btn-main btn-action" onclick="checkAnswer()">決定 (Enter)</button>
+
+        <!-- ボタンエリア -->
+        <button class="btn-main btn-reveal" id="btn-reveal" onclick="revealAnswer()">👁️ 答えを見る</button>
+        
+        <div class="action-group hidden" id="ox-buttons">
+            <button class="btn-ox btn-wrong" onclick="submitScore(false)">❌ 不正解...</button>
+            <button class="btn-ox btn-correct" onclick="submitScore(true)">◯ 正解！</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let totalQuestions = 10;
-    let complexity = 2;
-    let currentQuestionIndex = 1;
-    let correctX = 0, correctY = 0;
+    let cards = [];
+    let playQueue = [];
+    let currentPlayIndex = 0;
+    let correctCount = 0;
+    let isShowingAnswer = false;
 
-    function generateProblem(level) {
-        let x, y, a, b, d, e;
-        const lvl = parseInt(level, 10);
-
-        // クソ問題回避ループ（上下の式が同じ割合、または解がない状態を回避）
-        while (true) {
-            if (lvl === 1) {
-                // レベル1：x, yは1〜5の正の数。係数は1か2。
-                x = Math.floor(Math.random() * 5) + 1;
-                y = Math.floor(Math.random() * 5) + 1;
-                a = Math.floor(Math.random() * 2) + 1; // 1か2
-                b = Math.floor(Math.random() * 2) + 1; // 1か2
-                d = Math.floor(Math.random() * 2) + 1; // 1か2
-                e = Math.floor(Math.random() * 2) + 1; // 1か2
-            } else if (lvl === 2) {
-                x = Math.floor(Math.random() * 8) - 4; if(x>=0) x++;
-                y = Math.floor(Math.random() * 4) + 1;
-                a = Math.floor(Math.random() * 3) + 1; b = Math.floor(Math.random() * 3) + 1;
-                d = Math.floor(Math.random() * 2) + 1; e = -1;
-            } else if (lvl === 3) {
-                x = Math.floor(Math.random() * 10) - 5; if(x===0) x=2;
-                y = Math.floor(Math.random() * 10) - 5; if(y===0) y=3;
-                a = Math.floor(Math.random() * 4) + 2; b = Math.floor(Math.random() * 4) - 2; if(b===0) b=1;
-                d = Math.floor(Math.random() * 3) + 1; e = Math.floor(Math.random() * 4) + 2;
-            } else if (lvl === 4) {
-                x = Math.floor(Math.random() * 16) - 8; if(x===0) x=3;
-                y = Math.floor(Math.random() * 16) - 8; if(y===0) y=4;
-                a = Math.floor(Math.random() * 8) + 3; b = Math.floor(Math.random() * 8) - 4; if(b===0) b=2;
-                d = Math.floor(Math.random() * 6) + 2; e = Math.floor(Math.random() * 6) + 2;
-            } else {
-                x = Math.floor(Math.random() * 20) - 10; if(x===0) x=5;
-                y = Math.floor(Math.random() * 20) - 10; if(y===0) y=5;
-                a = Math.floor(Math.random() * 5) + 5; b = Math.floor(Math.random() * 4) + 2; 
-                d = Math.floor(Math.random() * 4) + 2; e = Math.floor(Math.random() * 5) + 5; 
-            }
-
-            // ⭐ 行列式 (ad - bc) が 0 でないかチェック（0だと上下の比率が同じになり破綻する）
-            if ((a * e - b * d) !== 0) {
-                break; // 健全な問題ならループを抜ける
-            }
-        }
-
-        let c = a * x + b * y;
-        let f = d * x + e * y;
-
-        let eq1 = `${a}x ${b >= 0 ? '+ ' + b : '- ' + Math.abs(b)}y = ${c}`;
-        let eq2 = `${d}x ${e >= 0 ? '+ ' + e : '- ' + Math.abs(e)}y = ${f}`;
+    // --- 💾 データの読み込みと表示 ---
+    function loadCards() {
+        cards = JSON.parse(localStorage.getItem('math_flashcards') || '[]');
         
-        eq1 = eq1.replace(/^1x/, 'x').replace(/ 1y/, ' y').replace(/-1y/, '-y');
-        eq2 = eq2.replace(/^1x/, 'x').replace(/ 1y/, ' y').replace(/-1y/, '-y');
-
-        correctX = x;
-        correctY = y;
-
-        document.getElementById('equation-display').innerHTML = `${eq1}<br>${eq2}`;
-    }
-
-    const complexityInput = document.getElementById('config-complexity');
-    const complexityDisplay = document.getElementById('complexity-display');
-    complexityInput.addEventListener('input', (e) => { complexityDisplay.innerText = `レベル ${e.target.value}`; });
-
-    function saveCurrentPreset() {
-        const count = document.getElementById('config-count').value;
-        const comp = complexityInput.value;
-        const name = prompt("お気に入り設定の名前:", `${count}問 / Lv.${comp}`);
-        if (!name) return;
-        let presets = JSON.parse(localStorage.getItem('math_presets') || '[]');
-        presets.push({ name: name, count: parseInt(count, 10), complexity: parseInt(comp, 10) });
-        localStorage.setItem('math_presets', JSON.stringify(presets));
-        loadPresets();
-    }
-
-    function loadPresets() {
-        const container = document.getElementById('preset-list'); container.innerHTML = '';
-        let presets = JSON.parse(localStorage.getItem('math_presets') || '[]');
-        if (presets.length === 0) {
-            presets = [
-                { name: "定番10問 (Lv.2)", count: 10, complexity: 2 },
-                { name: "ガッツリ20問 (Lv.3)", count: 20, complexity: 3 }
+        // サンプルデータ（空っぽの時の初期ガイド用）
+        if (cards.length === 0) {
+            cards = [
+                { q: "一番小さな素数は？", a: "2\n(※1は素数に含まれません)" },
+                { q: "√2 のおよその値（語呂合わせ）は？", a: "1.41421356\n(ひとよひとよにひとみごろ)" }
             ];
+            localStorage.setItem('math_flashcards', JSON.stringify(cards));
         }
-        presets.forEach((p) => {
-            const btn = document.createElement('button'); btn.className = 'btn-preset'; btn.innerText = p.name;
-            btn.onclick = () => { document.getElementById('config-count').value = p.count; complexityInput.value = p.complexity; complexityDisplay.innerText = `レベル ${p.complexity}`; };
-            container.appendChild(btn);
+        
+        document.getElementById('card-count').innerText = cards.length;
+        
+        const container = document.getElementById('card-list-container');
+        container.innerHTML = '';
+        cards.forEach((card, index) => {
+            const item = document.createElement('div');
+            item.className = 'card-item';
+            item.innerHTML = `
+                <div style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:10px;">
+                    <strong>Q:</strong> ${card.q}
+                </div>
+                <button class="btn-delete" onclick="deleteCard(${index})">削除</button>
+            `;
+            container.appendChild(item);
         });
+
+        // カードが0枚の時はスタートボタンを無効化
+        document.getElementById('btn-play-start').disabled = (cards.length === 0);
     }
 
-    function showConfig() {
-        document.getElementById('panel-config').classList.remove('hidden');
-        document.getElementById('panel-game').classList.add('hidden');
-        loadPresets();
+    // --- ➕ カード追加 ---
+    function addCard() {
+        const qText = document.getElementById('input-q').value.trim();
+        const aText = document.getElementById('input-a').value.trim();
+        
+        if (!qText || !aText) {
+            alert("問題文と解答の両方を入力してください！");
+            return;
+        }
+
+        cards.push({ q: qText, a: aText });
+        localStorage.setItem('math_flashcards', JSON.stringify(cards));
+        
+        document.getElementById('input-q').value = '';
+        document.getElementById('input-a').value = '';
+        loadCards();
     }
 
-    function startGame() {
-        totalQuestions = parseInt(document.getElementById('config-count').value, 10);
-        complexity = parseInt(complexityInput.value, 10);
-        currentQuestionIndex = 1;
+    // --- ❌ カード削除 ---
+    function deleteCard(index) {
+        if (!confirm("このカードを削除してもよろしいですか？")) return;
+        cards.splice(index, 1);
+        localStorage.setItem('math_flashcards', JSON.stringify(cards));
+        loadCards();
+    }
+
+    // --- 🚀 プレイ開始 ---
+    function startPlay() {
+        if (cards.length === 0) return;
+        
+        // 配列をシャッフルしてクローン（ランダム出題）
+        playQueue = [...cards].sort(() => Math.random() - 0.5);
+        currentPlayIndex = 0;
+        correctCount = 0;
+
         document.getElementById('panel-config').classList.add('hidden');
         document.getElementById('panel-game').classList.remove('hidden');
-        nextQuestion();
+        
+        showQuestion();
     }
 
-    function nextQuestion() {
-        document.getElementById('progress-text').innerText = `第 ${currentQuestionIndex} / ${totalQuestions} 問`;
-        document.getElementById('ans-x').value = ''; document.getElementById('ans-y').value = '';
-        document.getElementById('ans-x').focus();
-        generateProblem(complexity);
+    // --- 🎴 問題の表示 ---
+    function showQuestion() {
+        isShowingAnswer = false;
+        const currentCard = playQueue[currentPlayIndex];
+        
+        document.getElementById('progress-text').innerText = `第 ${currentPlayIndex + 1} / ${playQueue.length} 問`;
+        document.getElementById('score-text').innerText = `正解: ${correctCount}`;
+        
+        // カードを「問い面」にする
+        const tag = document.getElementById('card-tag');
+        tag.innerText = "QUESTION";
+        tag.className = "card-type type-q";
+        document.getElementById('card-content').innerText = currentCard.q;
+        
+        // ボタン状態のリセット
+        document.getElementById('btn-reveal').classList.remove('hidden');
+        document.getElementById('ox-buttons').classList.add('hidden');
     }
 
-    function checkAnswer() {
-        if(document.getElementById('ans-x').value === "" || document.getElementById('ans-y').value === "") return;
-        const userX = parseInt(document.getElementById('ans-x').value, 10);
-        const userY = parseInt(document.getElementById('ans-y').value, 10);
+    // --- 👁️ 解答の暴露 ---
+    function revealAnswer() {
+        isShowingAnswer = true;
+        const currentCard = playQueue[currentPlayIndex];
+        
+        // カードを「答え面」にする
+        const tag = document.getElementById('card-tag');
+        tag.innerText = "ANSWER / CHECK";
+        tag.className = "card-type type-a";
+        document.getElementById('card-content').innerText = currentCard.a;
+        
+        // ボタンの切り替え
+        document.getElementById('btn-reveal').classList.add('hidden');
+        document.getElementById('ox-buttons').classList.remove('hidden');
+    }
 
-        if (userX === correctX && userY === correctY) {
-            if (currentQuestionIndex < totalQuestions) {
-                currentQuestionIndex++;
-                nextQuestion();
-            } else {
-                window.parent.postMessage('GAME_CLEAR', '*');
-            }
+    // --- ◯❌ 自己採点の確定 ---
+    function submitScore(isCorrect) {
+        if (isCorrect) correctCount++;
+        
+        if (currentPlayIndex < playQueue.length - 1) {
+            currentPlayIndex++;
+            showQuestion();
         } else {
-            alert("答えが違います！もう一度計算してみてね。");
+            // 全問終了！親画面に終了通知とともに正解数を報告
+            // （せっかくなので親のタイムリザルト画面に「正解率」なども出せると面白いですが、
+            //   今回は既存の親のクリア演出をそのまま活かせるようにメッセージを送ります）
+            alert(`単語帳ノック終了！\n結果: ${playQueue.length}問中 ${correctCount}問 正解でした！`);
+            window.parent.postMessage('GAME_CLEAR', '*');
         }
     }
 
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !document.getElementById('panel-game').classList.contains('hidden')) {
-            checkAnswer();
-        }
-    });
-
-    showConfig();
+    // 起動
+    loadCards();
 </script>
 </body>
 </html>
