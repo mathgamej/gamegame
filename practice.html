@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-size: 20px; padding: 20px; max-width: 600px; margin: auto; }
+    textarea { font-size: 20px; width: 100%; height: 80px; margin-bottom: 10px; box-sizing: border-box; }
+    button { font-size: 18px; padding: 8px 16px; margin-right: 5px; }
+    .card { border: 2px solid #ccc; padding: 15px; margin-top: 20px; }
+    .ans { color: red; margin-top: 10px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 問題登録 -->
+  <textarea id="q" placeholder="問題"></textarea>
+  <textarea id="a" placeholder="解答"></textarea>
+  <button onclick="add()">追加</button>
+  <span id="count">0件</span>
+
+  <!-- 2. 出題・削除 -->
+  <div class="card">
+    <button onclick="next()">次の問題</button>
+    <button onclick="delCurrent()" style="color:red;">削除</button>
+    <div id="dispQ" style="margin-top:15px; white-space:pre-wrap;">「次の問題」を押してください</div>
+    <button onclick="showAns()" style="margin-top:15px;">答えを見る</button>
+    <div id="dispA" class="ans" style="display:none;"></div>
+  </div>
+
+<script>
+  let list = JSON.parse(localStorage.getItem('my_quiz') || '[]');
+  let currentIndex = -1; // 現在出題中のインデックス
+
+  function updateCount() {
+    document.getElementById('count').textContent = `${list.length}件`;
+  }
+  updateCount();
+
+  function add() {
+    const q = document.getElementById('q').value;
+    const a = document.getElementById('a').value;
+    if (!q) return;
+    list.push({ q, a });
+    localStorage.setItem('my_quiz', JSON.stringify(list));
+    document.getElementById('q').value = '';
+    document.getElementById('a').value = '';
+    updateCount();
+  }
+
+  function next() {
+    if (list.length === 0) {
+      document.getElementById('dispQ').textContent = '問題がありません';
+      document.getElementById('dispA').style.display = 'none';
+      currentIndex = -1;
+      return;
+    }
+    currentIndex = Math.floor(Math.random() * list.length);
+    document.getElementById('dispQ').textContent = list[currentIndex].q;
+    document.getElementById('dispA').textContent = list[currentIndex].a;
+    document.getElementById('dispA').style.display = 'none';
+  }
+
+  function showAns() {
+    if (currentIndex !== -1) document.getElementById('dispA').style.display = 'block';
+  }
+
+  // 出題中の問題を削除する処理
+  function delCurrent() {
+    if (currentIndex === -1 || list.length === 0) return;
+    
+    // 配列から削除してlocalStorageを更新
+    list.splice(currentIndex, 1);
+    localStorage.setItem('my_quiz', JSON.stringify(list));
+    updateCount();
+    
+    // 次の問題を表示（無ければリセット）
+    next();
+  }
+</script>
+</body>
+</html>
